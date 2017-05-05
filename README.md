@@ -157,11 +157,33 @@ Class Methods:
 ---
 ### <a name="landing"></a>Landing Gear
 
+This module contains methods for landing gear control. Written by Dylan Meehan.
+
+Methods:
+
+ Return Type  | Method Signature | Description 
+:-------------: |:-------------:| :-----:
+ void    | landingGearSetup()| Initializes pins that control landing gear relays.
+void   |  landingGearDown()| Lowers landing gear for stopping the bike without falling over.
+ void | landingGearUp()| Raises landing gear
 ---
 ### <a name="imu"></a>IMU
+This module handles communication with the IMU. Written by Arjun.
 
+Methods:
+
+  Return Type       | Method Signature          | Description 
+:-------------: |:-------------:| :-----:
+ void    | void initIMU(void) | Initializes the IMU so that it is ready to deliver data
+ float   |  float getIMU(byte)|  Method that returns IMU data. Input argument 0x01 returns lean angle, and 0x26 returns lean rate.
 ---
 ### <a name="watchdog"></a>Watchdog
 
+Methods:
+
+ Return Type       | Method Signature          | Description 
+:-------------: |:-------------:| :-----:
+ void    | recordStartTime()| Records Arduino time: called at beginning of main loop
+ void   |  verifyEndTime()| Records Arduino time and checks against stored start time to avoid loop length violations
 ---
 
