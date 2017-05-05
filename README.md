@@ -13,8 +13,8 @@
 
 # Documentation
 The main code that runs on our Arduino Due is composed of the following modules:
-* [Front Motor Controller/Encoder](https://github.com/CornellAutonomousBikeTeam/CurrentBikeCode/blob/master/README.md#frontmotorcontroller/encoder)
-* [Rear Motor Controller](https://github.com/CornellAutonomousBikeTeam/CurrentBikeCode/blob/master/README.md#rearmotorcontroller)
+* [Front Motor Controller/Encoder](https://github.com/CornellAutonomousBikeTeam/CurrentBikeCode/blob/master/README.md#front_motor_controller/encoder)
+* [Rear Motor Controller](https://github.com/CornellAutonomousBikeTeam/CurrentBikeCode/blob/master/README.md#rear_motor_controller)
 * [RC Controller](https://github.com/CornellAutonomousBikeTeam/CurrentBikeCode/blob/master/README.md#rccontroller)
 * [GPS](https://github.com/CornellAutonomousBikeTeam/CurrentBikeCode/blob/master/README.md#gps)
 * [Landing Gear](https://github.com/CornellAutonomousBikeTeam/CurrentBikeCode/blob/master/README.md#landinggear)
