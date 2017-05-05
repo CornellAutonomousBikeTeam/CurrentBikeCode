@@ -8,7 +8,7 @@
  > Kenneth Fang
  
  ## Reason for commit
-> Working on documentation for the code embedded in the README.md
+> Working on documentation for the code embedded in the README.md, and tracking the code that I will be working on cleaning for next summer
 
 ---
 # Documentation
