@@ -27,6 +27,12 @@ The Bike_State.ino file contains the defintiion for the Bike object that is inti
 ---
 
 ### <a name="front"></a>Front Motor Controller/Encoder
+This object currently represents both the front motor controller and the encoder. One can create a 
+new instance of front motor controller using the following code:
+```c++
+myInstance = new Front_Motor_Controller(int K_p, int K_d, int Ki);
+```
+Class Definition:
   <details>
     <summary><small>Front_Motor.h</small></summary><p>
     
@@ -94,9 +100,6 @@ The Bike_State.ino file contains the defintiion for the Bike object that is inti
         float sv_error = 0;
         int pwm = 0;
     
-    
-    
-    
         //Added by Kenneth for constructors
         const int K_p;
         const int K_d;
@@ -131,6 +134,16 @@ The Bike_State.ino file contains the defintiion for the Bike object that is inti
     };
     #endif //Front_Motor_h
   </p></details>
+  
+Class Methods:
+*void encoderAndFrontMotorSetup(); //Maybe change to just setup()
+*void calibrate();
+*int velocityToPWM(float);
+*float eulerIntegrate(float, float);
+*float updateEncoderPosition();
+*float frontWheelControl(float, float);
+*float balanceController(float, float, float); //And we'll all float on alright
+*float PID_Controller(float, signed int, signed int, unsigned long, unsigned long, signed int);
 
 ---
 ### <a name="rear"></a>Rear Motor Controller
