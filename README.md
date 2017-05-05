@@ -33,8 +33,10 @@ The main .ino file initalizes a Bike_State object, and then calls one method. Ev
 This object currently represents both the front motor controller and the encoder. One can create a 
 new instance of front motor controller using the following code:
 ```c++
-myInstance = new Front_Motor_Controller(int K_p, int K_d, int Ki);
+myInstance = new Front_Motor_Controller(int K_p, int K_d, int K_i);
 ```
+Where K_p is the proportional gain, K_d is derivative gain, and K_i is the integral gain. The balance controller for the bike is implemented in this module.
+
 Class Definition:
   <details>
     <summary><small>Front_Motor.h</small></summary><p>
@@ -138,15 +140,18 @@ Class Definition:
     #endif //Front_Motor_h
   </p></details>
   
-Class Methods:
-*void encoderAndFrontMotorSetup(); //Maybe change to just setup()
-*void calibrate();
-*int velocityToPWM(float);
-*float eulerIntegrate(float, float);
-*float updateEncoderPosition();
-*float frontWheelControl(float, float);
-*float balanceController(float, float, float); //And we'll all float on alright
-*float PID_Controller(float, signed int, signed int, unsigned long, unsigned long, signed int);
+Methods:
+
+ Return Type  | Method Signature | Description 
+:-------------: |:-------------:| :-----:
+ void   | encoderAndFrontMotorSetup()| Initializes pins for encoder and front motor controls
+ void   | calibrate() | Runs zeroing procedure for calibrating the front motor.
+ float |  updateEncoderPosition() | Returns Encoder position in radians
+ void |  balanceController(float roll_angle, float roll_rate, float encoder_angle) | Computes desired steer angle to balance bike
+ void | frontWheelControl(float desiredVelocity, float current_pos) | PID controller for front motor
+ void | PID_Controller(float, signed int, signed int, unsigned long, unsigned long, signed int) | deprecated: use frontwheelcontrol
+ 
+ //TODO go over with Will
 
 ---
 ### <a name="rear"></a>Rear Motor Controller
@@ -163,10 +168,10 @@ Methods:
 
  Return Type  | Method Signature | Description 
 :-------------: |:-------------:| :-----:
- void   | void updateSpeed() | Attached to an interrupt in order to constantly update the bike's current speed- internal to class
+ void   | updateSpeed() | Attached to an interrupt in order to constantly update the bike's current speed- internal to class
  float  | getSpeed() | Returns bike's speed in meters per second (m/s)
  void | controlSpeed(float desiredVelocity)| Commands the proportional controller to hold desiredVelocity
- void |  void switchDirection(boolean) | Switches rear motor's direction
+ void |  switchDirection(boolean) | Switches rear motor's direction. True sets motor to forward, and False reverse
  void | setPins() | Initializes pins for rear motor controller.
 
 ---
@@ -208,7 +213,7 @@ Methods:
 
   Return Type       | Method Signature          | Description 
 :-------------: |:-------------:| :-----:
- void    | void initIMU(void) | Initializes the IMU so that it is ready to deliver data
+ void    | initIMU(void) | Initializes the IMU so that it is ready to deliver data
  float   |  float getIMU(byte)|  Method that returns IMU data. Input argument 0x01 returns lean angle, and 0x26 returns lean rate.
 ---
 ### <a name="watchdog"></a>Watchdog
