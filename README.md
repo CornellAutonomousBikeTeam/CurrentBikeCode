@@ -21,8 +21,11 @@ The main code that runs on our Arduino Due is composed of the following modules:
 * [IMU (Intertial Measurement Unit)](#imu)
 * [Watchdog](#watchdog)
 
+Most of the pieces of hardware on the bike have been abstracted as objects in the code. Some, like IMU and Landing Gear are simply composed of convenience functions. Others like Rear and Front Motor Controllers can be initialized and possess methods and variables. Each module has a corresponding .cpp and.h file. All of these components are implemented in the Bike_State class, which can call methods from any of the modules.
 
-The Bike_State.ino file contains the defintiion for the Bike object that is intiialized and run in the main file. ROS communication is implemented in the main file.
+The Bike_State files contain the defintiion for the overall Bike object that is intiialized and run in the main file. ROS communication is implemented in the main file. Aside from ROS, everything on the Arduino is implemented within this class.
+
+The main .ino file initalizes a Bike_State object, and then calls one method. Everything else is handled internally within the Bike_State class. ROS communication is implemented in the main .ino file, in order to maintain consistency with the rest of the ROS modules.
 
 ---
 
@@ -147,12 +150,43 @@ Class Methods:
 
 ---
 ### <a name="rear"></a>Rear Motor Controller
+This class controls the rear motor. It calculates the current speed of the rear motor in order to use
+a proportional controller with a feedback loop. Currently under testing.
+
+To initialize a rear motor object use the following code:
+```c++
+Rear_Motor_Controller myInstance = Rear_Motor_Controller(float K_p);
+```
+where K_p is the desired proportional gain.
+
+Methods:
+
+ Return Type  | Method Signature | Description 
+:-------------: |:-------------:| :-----:
+ void   | void updateSpeed() | Attached to an interrupt in order to constantly update the bike's current speed- internal to class
+ float  | getSpeed() | Returns bike's speed in meters per second (m/s)
+ void | controlSpeed(float desiredVelocity)| Commands the proportional controller to hold desiredVelocity
+ void |  void switchDirection(boolean) | Switches rear motor's direction
+ void | setPins() | Initializes pins for rear motor controller.
 
 ---
 ### <a name="rc"></a>RC Controller
+Handles signals from RC controller. Has __ channels total. Ask Will Murphy which channels are being used where.
+Methods from this class are attached as interrupts in the main code.
+
+Methods:
+
+ Return Type  | Method Signature | Description 
+:-------------: |:-------------:| :-----:
+ void    | RCsetup()| Initializes pins for RC interrupts
+void   |  calcSignal()| Used to adjust bike steering
+ void | calcSignal2()| Used to adjust rear motor speed
+ void |  calcSignal6() | Used to control landing gear
 
 ---
 ### <a name="gps"></a>GPS
+
+To be collected from Aviv Blumfield
 
 ---
 ### <a name="landing"></a>Landing Gear
