@@ -5,10 +5,10 @@
   - [ ] This repo needs a git ignore
  
  ## Last commited by
- >[Insert name here]
+ > Kenneth Fang
  
  ## Reason for commit
->[Insert what you did here]
+> Working on documentation for the code embedded in the README.md
 
 ---
 # Documentation
