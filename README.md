@@ -21,6 +21,10 @@ The main code that runs on our Arduino Due is composed of the following modules:
 * [IMU (Intertial Measurement Unit)](#imu)
 * [Watchdog](#watchdog)
 
+These are all combined into 
+
+[Bike State](#bike)
+
 Most of the pieces of hardware on the bike have been abstracted as objects in the code. Some, like IMU and Landing Gear are simply composed of convenience functions. Others like Rear and Front Motor Controllers can be initialized and possess methods and variables. Each module has a corresponding .cpp and.h file. All of these components are implemented in the Bike_State class, which can call methods from any of the modules.
 
 The Bike_State files contain the defintiion for the overall Bike object that is intiialized and run in the main file. ROS communication is implemented in the main file. Aside from ROS, everything on the Arduino is implemented within this class.
@@ -38,8 +42,9 @@ myInstance = new Front_Motor_Controller(int K_p, int K_d, int K_i);
 Where K_p is the proportional gain, K_d is derivative gain, and K_i is the integral gain. The balance controller for the bike is implemented in this module.
 
 Class Definition:
+
   <details>
-    <summary><small>Front_Motor.h</small></summary><p>
+    <summary><small>Front_Motor.h-Click to Expand</small></summary><p>
     
     
     
@@ -218,6 +223,8 @@ Methods:
 ---
 ### <a name="watchdog"></a>Watchdog
 
+Module that checks loop length in order to ensure that the bike controllers do not exceed the Due's computing power.
+
 Methods:
 
  Return Type       | Method Signature          | Description 
@@ -226,3 +233,67 @@ Methods:
  void   |  verifyEndTime()| Records Arduino time and checks against stored start time to avoid loop length violations
 ---
 
+## <a name="bike"></a> Bike State
+
+This class is the abstraction of the bike as a whole on the Arduino. It has two methods that are called in the main code.
+
+Class Definition:
+
+  <details>
+    <summary><small>Bike_State.h-Click to Expand</small></summary><p>
+    
+    
+    
+    #ifndef Bike_State_h
+    #define Bike_State_h
+    
+    #include "Rear_Motor.h"
+    #include "Front_Motor.h"
+    #include "RC_Handler.h"
+    #include "Landing_Gear.h"
+    #include "Bike_State.h"
+    #include "IMU.h"
+    #include "Watchdog.h"
+    
+    class Bike_State {
+      public:
+        Bike_State();
+    
+        float desired_velocity;
+        float current_velocity;
+        float lean_angle;
+        float lean_rate;
+        float encoder_position;
+        float time;
+        float desired_steer;
+    
+        Rear_Motor_Controller *rear;
+        Front_Motor_Controller *front;
+        RC_Handler rc;
+        Watchdog doggo;
+    
+        
+    
+        /*
+         * Helper method that is used in processLoop()
+         */
+        void updateIMUData();
+        /*
+         * Runs one iteration of main loop code from RC Bike
+         */
+        void processLoop();
+        /*
+         * Sets up all pins and such, except for interrupts
+         */
+        void setupBike();
+    };
+    
+    #endif //Bike_State_h
+  </p></details>
+  
+  Methods:
+  
+   Return Type       | Method Signature          | Description 
+:-------------: |:-------------:| :-----:
+ void    | processLoop() | Runs one iteration of all the modules' code
+ void   |  setupBike() | Convenience function that calls all module setup functions
