@@ -3,6 +3,7 @@
 
  ## Known Bugs
   - [ ] This repo needs a git ignore
+  - [ ] Remove all pointers in code
  
  ## Last commited by
  > Kenneth Fang
