@@ -38,7 +38,11 @@ ros::Publisher state_pub("bike_state", &bike_state);
 //==========================Initialize Controllers===============
 Bike_State bike;
 
+
 void setup() {
+  
+  Serial.begin(19200);
+  Serial.println(0);
 
 
   attachInterrupt(digitalPinToInterrupt(in_pin), update_Rear_Motor_Speed, RISING);
@@ -46,11 +50,13 @@ void setup() {
   attachInterrupt(RC_CH1, rc1, CHANGE);
   attachInterrupt(RC_CH2, rc2, CHANGE);
   attachInterrupt(RC_CH6, rc6, CHANGE);
-
+    Serial.println(1);
   bike.setupBike();
+      Serial.println(3);
 }
 
 void loop() {
+  Serial.println('Top of the loop');
   bike.processLoop();
 
   

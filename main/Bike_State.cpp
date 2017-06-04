@@ -26,7 +26,7 @@ Bike_State::Bike_State(){
     delete rear;
     rear = new Rear_Motor_Controller(8);
     delete front;
-    front = new Front_Motor_Controller(2000, -10, 0);
+    front = new Front_Motor_Controller(2000, -20, 0);
 }
 
 void Bike_State::updateIMUData() {
@@ -34,17 +34,24 @@ void Bike_State::updateIMUData() {
   lean_rate = getIMU(0x26);
 }
 void Bike_State::setupBike() {
-  Serial.begin(9600);
-  rear->rampPWM(90);
+  
+  Serial.println(2);
+  
   rear->setPins();
+  Serial.println(3);
   rc.RCsetup();
-
-  initIMU();
+  Serial.println(4);
   landingGearSetup();
-
+  Serial.println(5);
   front->encoderAndFrontMotorSetup();
+  Serial.println(6);
+  initIMU();
+  Serial.println(7);
+  
+  rear->rampPWM(90);
+  Serial.println(8);
   front->calibrate();
-
+  Serial.println(9);
 }
 void Bike_State::processLoop() {
   //rear.controlSpeed(1.5); //TODO This somehow affects front motor calibration

@@ -49,7 +49,7 @@ void Rear_Motor_Controller::rampPWM(float desired_PWM) {
     analogWrite(pwm_rear, pwm);
     delay(update_delay);
     pwm = pwm + 10;
-    //Serial.print(pwm);
+    Serial.println(pwm);
     //Serial.print("\n");
   }
 }
