@@ -72,7 +72,7 @@ void loop() {
 
 
 void update_Rear_Motor_Speed() {
-  bike.rear->updateSpeed();
+  bike.rear.updateSpeed();
 }
 void rc1() {
   bike.rc.calcSignal();
