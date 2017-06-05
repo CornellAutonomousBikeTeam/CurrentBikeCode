@@ -66,11 +66,13 @@ void Front_Motor_Controller::encoderAndFrontMotorSetup() {
 void Front_Motor_Controller::calibrate() {
   //  the follwing loop will not terminate until wheel passes front tick on encoder twice. The second time should be passed very slowly-
   //  this will allow for the most accurate location to be found for the center alignment of the front wheel with the bike.
+  Serial.println("In calibrate");
 
   signed int y = REG_TC0_CV1;
   oldIndex = y;
   digitalWrite(DIR, HIGH);
   while (y == oldIndex) {
+    Serial.println("in while loop");
     analogWrite(PWM_front, 20);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");

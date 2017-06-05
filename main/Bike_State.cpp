@@ -47,6 +47,7 @@ void Bike_State::setupBike() {
   
   rear.rampPWM(90);
   Serial.println(8);
+  
   front.calibrate();
   Serial.println(9);
 }
