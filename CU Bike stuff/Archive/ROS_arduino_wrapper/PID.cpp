@@ -14,7 +14,9 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   float pos_error = desired_pos - current_pos ;
 
   //scaled positional error
-  //position scaling factor K_p = 100/(M_PI/2) found by taking 100 (100 being max pwm value I want to reach), and dividing by theoretical max absolute value of angle (Pi/2). This means with angles in that range, 100 will be the max PWM value outputted to the motor
+  //position scaling factor K_p = 100/(M_PI/2) found by taking 100 (100 being max pwm value I want to reach), 
+  //and dividing by theoretical max absolute value of angle (Pi/2). 
+  //This means with angles in that range, 100 will be the max PWM value outputted to the motor
   float sp_error =  (K_p*pos_error);
 
   //D term
@@ -25,7 +27,8 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   //calculate the value of the current time step in microseconds
   //unsigned long delta_t = 2000;
   
-  // the value of the velocity error will be negative of the current velocity (in order to resist current direction of motion). Calculated as target_velocity - current_velocity where target velocity is always 0
+  // the value of the velocity error will be negative of the current velocity (in order to resist current direction of motion). 
+  //Calculated as target_velocity - current_velocity where target velocity is always 0
   //scaled velocity error
   float sv_error =  (-K_d*current_vel)  ;  
   float total_error =  sp_error + sv_error ;
@@ -38,14 +41,16 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
     digitalWrite(DIR, HIGH);
   }
 
-  //clip the maximum output to the motor by essentially saying "if the value is greater than this threshold, make the output to the motor this exact threshold value"
-//  Serial.println(String(current_pos) + "\t" + String(desired_pos) + "\t" + String(pos_error) + "\t" + String(total_error));
+  //clip the maximum output to the motor by essentially saying "if the value is greater than this threshold, 
+ //make the output to the motor this exact threshold value"
+ //  Serial.println(String(current_pos) + "\t" + String(desired_pos) + "\t" + String(pos_error) + "\t" + String(total_error));
 
   oldPosition = x-x_offset;
-   if (total_error > 100 || total_error < -100) {
+   if (total_error > 100 || total_error < -100) { 
       analogWrite(PWM_front, 100);
    } else { 
       analogWrite(PWM_front, abs((int)(total_error))); 
    }
    return current_vel;
 }
+
