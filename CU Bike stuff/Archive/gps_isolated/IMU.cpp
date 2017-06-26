@@ -65,9 +65,9 @@ void initIMU(void){
 //  
 ////
 ////  SPI.transfer(0x52); //set streaming timing
-////  SPI.transfer(10000); //streaming interval ÂµS
+////  SPI.transfer(10000); //streaming interval Ã‚ÂµS
 ////  SPI.transfer(0xFFFFFFFF, 4); //streaming duration
-////  SPI.transfer(500);//Delay ÂµS
+////  SPI.transfer(500);//Delay Ã‚ÂµS
 //
 //  //check timing 
 //  unsigned int Result2 = SPI.transfer(0x53);
@@ -161,6 +161,7 @@ float getIMU(byte commandToWrite){
     getIMU(commandToWrite);
   }
 }
+
 
 
 
