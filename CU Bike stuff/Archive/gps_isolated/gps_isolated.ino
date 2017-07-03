@@ -150,8 +150,6 @@ void loop() {
       //Serial.print("Serial3 read in"); Serial.println(Serial.read());
     }
   }
-  /*
-   * ROS STUFF
     gps_state.data[0] = gps.location.lat(); //latitude (deg)
   gps_state.data[1] = gps.location.lng(); //longitude (deg)
   gps_state.data[2] = gps.time.hour(); // Hour (0-23)
@@ -165,7 +163,7 @@ void loop() {
   gps_state.data[10] = curr_millis - prev_millis; //Time since last update
    gps_pub.publish( &gps_state );
   state_pub.publish( &bike_state );
-  nh.spinOnce();*/
+  nh.spinOnce();
 }
 
 
