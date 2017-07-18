@@ -264,7 +264,7 @@ void setup()
 {
 
   nh.initNode();
-  int data_size = 10;
+  int data_size = 12;
   int gps_state_data_size = 12;
   nh.subscribe(nav_sub);
   bike_state.data_length = data_size;
@@ -317,12 +317,12 @@ void setup()
   byte gpsmsgbaud2[] = {0xB5, 0x62, 0x06, 0x41, 0x09, 0x00, 0x01, 0x01, 0x30, 0x81, 0x00, 0x00, 0x00, 0x00, 0xFB, 0xFE, 0x1F};
   byte gpsConvertToDefault[] = {0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x03, 0x1B, 0x9A};
   byte gpsmsgSaveConf[] = {0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x1D, 0xAB};
-  byte gpsmsgbaud57600[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0xD0,0x08,0x00,0x00,0x00,0xE1,0x00,0x00,0x07,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0xDE,0xC9};
+  byte gpsmsgbaud57600[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0xD0,0x08,0x00,0x00,0x00,0xE1,0x00,0x00,0x03,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0xDA,0xA9}; //UBX and NMEA
   byte gpsmsgbaud19200[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0xD0,0x08,0x00,0x00,0x00,0x4B,0x00,0x00,0x07,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x48,0x57};
   //Configures gps to 5hz update rate; change gpsmsg5 to a different byte encoding for different configurations
   //sendUBX(gpsmsgpoll, sizeof(gpsmsgpoll));
   //sendUBX(gpsConvertToDefault, sizeof(gpsConvertToDefault));
-  sendUBX(gpsmsg8, sizeof(gpsmsg8));
+  sendUBX(gpsmsg10, sizeof(gpsmsg10));
   sendUBX(gpsmsgbaud57600, sizeof(gpsmsgbaud57600));
   sendUBX(gpsmsgSaveConf, sizeof(gpsmsgSaveConf));
   Serial3.end();
@@ -548,7 +548,7 @@ struct roll_t updateIMUData() {
   //get data from IMU
   float roll_angle = getIMU(0x01, 2);   //get roll angle
   float roll_rate = getIMU(0x26, 2);    //get roll rate
-  float yaw = getIMU(0x01, 1)          //get yaw
+  float yaw = getIMU(0x01, 1);          //get yaw
   roll_data.angle = roll_angle;
   roll_data.rate = roll_rate;
   roll_data.yaw = yaw;
@@ -600,8 +600,8 @@ void loop() {
   bike_state.data[6] = speed; //rear motor (m/s) (based on hall sensor)
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
-  bike_state.data[9] = imu_data.yaw; //yaw
-  
+  bike_state.data[9] = imu_data.yaw; //yaw (rad)
+  //Serial.print("YAW: "); Serial.println(imu_data.yaw);
   //gps data (Don't change these indexes either)
   while (Serial3.available()) {
     //Serial.print((char)Serial3.read());
@@ -647,10 +647,9 @@ void loop() {
   gps_state.data[8] = gps.speed.mps(); //speed from gps (m/s)
   gps_state.data[9] = gps.hdop.value(); // Horizontal Dim. of Precision (100ths-i32)
   gps_state.data[10] = curr_millis - prev_millis; //Time since last update
-  gps_state.data[11] = bits_so_far; //Time since last update
+ gps_state.data[11] = bits_so_far; //Time since last update
   bits_so_far = 0;
   //gps_state.data[5] = (gps.time.centisecond()); // 100ths of a second (0-99)
-  Serial.print("CHECKPOINT3");
   //Publish address of bike,gps state objects for ROS
   gps_pub.publish( &gps_state );
   state_pub.publish( &bike_state );
