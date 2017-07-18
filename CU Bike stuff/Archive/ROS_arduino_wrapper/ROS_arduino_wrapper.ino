@@ -302,7 +302,7 @@ void setup()
   Serial.begin(57600); //Set to the same rate as ROS for correct Serial connections
   //GPS
   // GPS baudrate (gps hardware runs natively at 9600)
-  Serial3.begin(57600); //This was originally 9600 - test with higher baud rates
+  Serial3.begin(9600); //This was originally 9600 - test with higher baud rates
 
   //hex messages that config gps data rate - found hex encodings via u-center
   byte gpsmsg10[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12}; //10hz
@@ -322,10 +322,11 @@ void setup()
   //Configures gps to 5hz update rate; change gpsmsg5 to a different byte encoding for different configurations
   //sendUBX(gpsmsgpoll, sizeof(gpsmsgpoll));
   //sendUBX(gpsConvertToDefault, sizeof(gpsConvertToDefault));
- // sendUBX(gpsmsgbaud19200, sizeof(gpsmsgbaud19200));
-  sendUBX(gpsmsg8, sizeof(gpsmsg10));
+  sendUBX(gpsmsg8, sizeof(gpsmsg8));
+  sendUBX(gpsmsgbaud57600, sizeof(gpsmsgbaud57600));
   sendUBX(gpsmsgSaveConf, sizeof(gpsmsgSaveConf));
-
+  Serial3.end();
+  Serial3.begin(57600);
   initIMU();
   //setup rc
   //  pinMode(front_steer_value, INPUT);
@@ -596,6 +597,7 @@ void loop() {
   bike_state.data[6] = speed; //rear motor (m/s) (based on hall sensor)
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
+  
     Serial.print("CHECKPOINT2");
 
   //gps data (Don't change these indexes either)
