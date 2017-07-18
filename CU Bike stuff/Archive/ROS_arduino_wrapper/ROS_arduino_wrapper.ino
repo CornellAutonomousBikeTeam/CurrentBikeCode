@@ -539,16 +539,19 @@ float balanceController(float roll_angle, float roll_rate, float encoder_angle) 
 struct roll_t {
   float rate;
   float angle;
+  float yaw; 
 };
 
 // Retrieve data from IMU about roll angle and rate and return it
 struct roll_t updateIMUData() {
   roll_t roll_data;
   //get data from IMU
-  float roll_angle = getIMU(0x01);   //get roll angle
-  float roll_rate = getIMU(0x26);    //get roll rate
+  float roll_angle = getIMU(0x01, 2);   //get roll angle
+  float roll_rate = getIMU(0x26, 2);    //get roll rate
+  float yaw = getIMU(0x01, 1)          //get yaw
   roll_data.angle = roll_angle;
   roll_data.rate = roll_rate;
+  roll_data.yaw = yaw;
   return roll_data;
 }
 //Loop variables
@@ -597,9 +600,8 @@ void loop() {
   bike_state.data[6] = speed; //rear motor (m/s) (based on hall sensor)
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
+  bike_state.data[9] = imu_data.yaw; //yaw
   
-    Serial.print("CHECKPOINT2");
-
   //gps data (Don't change these indexes either)
   while (Serial3.available()) {
     //Serial.print((char)Serial3.read());

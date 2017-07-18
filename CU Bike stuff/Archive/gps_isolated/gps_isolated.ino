@@ -78,7 +78,7 @@ void setup()
   Serial.begin(57600);
   //GPS
   // GPS baudrate (gps hardware runs natively at 9600)
-  Serial3.begin(57600); //This was originally 9600 - test with higher baud rates
+  Serial3.begin(9600);
   /*
   CURRENT DEFAULT CONFIGURATION: 57600 Baud; 10 hz update rate
   */
@@ -103,8 +103,11 @@ void setup()
   //sendUBX(gpsConvertToDefault, sizeof(gpsConvertToDefault));
   //sendUBX(gpsmsgbaud57600, sizeof(gpsmsgbaud57600));
   sendUBX(gpsmsg8, sizeof(gpsmsg8));
-
+  sendUBX(gpsmsgbaud57600, sizeof(gpsmsgbaud57600));
   sendUBX(gpsmsgSaveConf, sizeof(gpsmsgSaveConf));
+  Serial3.end();
+  Serial3.begin(57600); //This was originally 9600 - test with higher baud rates
+
 }
 
 //Loop variables

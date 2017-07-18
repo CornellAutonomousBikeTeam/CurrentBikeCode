@@ -11,46 +11,46 @@ import kalman
 import requestHandler
 
 
-#First we must make sure we are in the right directory in ROS
-#subprocess.call(["cd"]) 
-#Call the start script from the terminal to initialize ROS nodes; '&' - runs script in background
-#subprocess.call("bash start.sh &", shell=True)    
-def kalman(data)
+def bike_state(data)
+    velocity = data.data[6]
+    yaw = data.data[9]
+    bike_vy = [velocity, yaw]
+    
+def gps(data)
     #Important fields from data
     latitude = data.data[0] # In degrees
     longitude = data.data[1]
-    psi = data.data[7] # psi = heading in radians
-    velocity = data.data[8]
-
+    #psi = data.data[7] # psi = heading in radians
+    #velocity = data.data[8]
     # Converts lat long to x,y 
     x, y = requestHandler.math_convert(float(latitude), float(longitude)) 
-
     # gps current state - only relevant fields
-    gps_curr = [x, y, float(psi), float(velocity)]
-    # The Kalman filter wants the GPS data in matrix form
-    gps_matrix = np.matrix(gps_curr)
-    # Run the Kalman filter
-    output_matrix = kalman.kalman_no_loop(gps_matrix, np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])) 
-    #Change output_matrix to a standard array for publishing
-    kalman_state = output_matrix.flatten()
-    #save gps state values for later plotting
-    gps_data.append(gps_matrix)
-    #save predicted state values for later plotting
-    kalman_data.append(output_matrix) 
+    gps_xy = [x, y]
+   
 
 
 
 def listener():
     pub = rospy.Publisher('kalman_state', Float32MultiArray, queue_size=10)
     rospy.init_node('kalman', anonymous=True)
-    rospy.Subscriber("gps", Float32MultiArray, kalman)
+    rospy.Subscriber("bike_state", Float32MultiArray, bike_state)
+    rospy.Subscriber("gps", Float32MultiArray, gps)
     rate = rospy.Rate(100)
     #Run until the nodes are shutdown (end.sh run OR start.sh was killed)
     while not rospy.is_shutdown():
         dim = [MultiArrayDimension('data', 4, 4)]
         layout = MultiArrayLayout(dim, 0)
-        #rospy.loginfo("({:.4f}, {:.4f}), heading {:.4f}, velocity {:.4f}, lean angle/rate {:.4f}/{:.4f}, steering {:.4f} [gps_assisted_simulator_node]".format(new_bike.xB, new_bike.yB, new_bike.psi, new_bike.v, new_bike.phi, new_bike.w_r, new_bike.delta))
-        #rospy.loginfo(l)
+        # The Kalman filter wants the GPS data in matrix form
+        #Build matrix from gps x,y coordinates and bike velocity and yaw
+        gps_matrix = np.matrix(gps_xy + bike_vy) 
+        # Run the Kalman filter
+        output_matrix = kalman.kalman_no_loop(gps_matrix, np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])) 
+        #Change output_matrix to a standard array for publishing
+        kalman_state = output_matrix.flatten()
+        #save gps state values for later plotting
+        gps_data.append(gps_matrix)
+        #save predicted state values for later plotting
+        kalman_data.append(output_matrix) 
         pub.publish(layout, kalman_state)
         rate.sleep()
     print 'Test was terminated'
@@ -62,6 +62,9 @@ def listener():
     plt.show()
 
 if __name__ == '__main__':
+    #Data from bike_state and gps respectively
+    gps_xy = [] #x,y converted from latitude and longitude from gps
+    bike_vy = [] #bike velocity and yaw
     #kalman/gps data saved as we go for later plotting
     kalman_data = []
     gps_data = []

@@ -102,7 +102,7 @@ void initIMU(void){
 //     
 //}
 
-float getIMU(byte commandToWrite){
+float getIMU(byte commandToWrite, int x){
     SPI.beginTransaction(settings);
 //   float l_start = micros();
   /*Setup bytes to write*/
@@ -155,10 +155,10 @@ float getIMU(byte commandToWrite){
       endianSwap(data[mm].b);
     }
     
-    return data[2].fval;  //returns roll angle or roll rate
+    return data[x].fval;  //returns roll angle or roll rate
 
   }else{
-    getIMU(commandToWrite);
+    getIMU(commandToWrite, x);
   }
 }
 

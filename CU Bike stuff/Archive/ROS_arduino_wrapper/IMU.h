@@ -16,7 +16,7 @@
 void initIMU(void);
 
 //IMU data
-float getIMU(byte);
+float getIMU(byte, int);
 
 
 #endif //IMU_h
