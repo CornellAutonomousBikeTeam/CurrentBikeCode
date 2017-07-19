@@ -30,7 +30,7 @@ def gps(data)
 
 
 def listener():
-    pub = rospy.Publisher('kalman_state', Float32MultiArray, queue_size=10)
+    pub = rospy.Publisher('kalman_pub', Float32MultiArray, queue_size=10)
     rospy.init_node('kalman', anonymous=True)
     rospy.Subscriber("bike_state", Float32MultiArray, bike_state)
     rospy.Subscriber("gps", Float32MultiArray, gps)
@@ -46,12 +46,13 @@ def listener():
         gps_data.append(gps_matrix)
         # Run the Kalman filter - if we only have one point we can't run the filter yet
         if len(gps_data) >= 1:
+
             #If we have 
             if len(gps_data) == 1:
-                output_matrix = kalman.kalman_no_loop(gps_matrix, np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]), 
+                output_matrix = kalman_real_time.kalman_no_loop(gps_matrix, np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]), 
                                                      (gps_data[-1], np.matrix([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]))) 
             else 
-                output_matrix = kalman.kalman_no_loop(gps_matrix, np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]), 
+                output_matrix = kalman_real_time.kalman_no_loop(gps_matrix, np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]), 
                                                      (kalman_state_matrix, p_state_matrix)) 
 
             kalman_state_matrix = output_matrix[0]
@@ -63,7 +64,8 @@ def listener():
             kalman_data.append(kalman_state_matrix) 
             pub.publish(layout, kalman_state)
         rate.sleep()
-    print 'Test was terminated'
+        rospy.loginfo('SUCCESSFUL ITERATION')
+    rospy.loginfo('Test was terminated')
     # Plot the GPS data
     plt.scatter(gps_data[:,0], gps_data[:,1], c='r')
     # Plot the Kalman output
