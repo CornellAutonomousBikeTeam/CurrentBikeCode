@@ -494,9 +494,16 @@ float updateEncoderPosition() {
   return current_pos;
 }
 
-/* takes in desired position and applies a PID controller to minimize error between current position and desired position */
-float frontWheelControl(float desiredVelocity, float current_pos) { //steer contribution doese not need to be passed into
-  //frontWheelControl because it is a global variable
+/*
+ * Takes in desired position and applies a PID controller to minimize
+ * error between current position and desired position. This function
+ * also calls PID_Controller (from PID.cpp), which sends the actual PWM
+ * signal to the front wheel.
+ */
+float frontWheelControl(float desiredVelocity, float current_pos) {
+
+  // steer_contribution is a global variable, so we don't need to make
+  // it a parameter of this function
 
   unsigned long current_t = micros();
 
@@ -514,17 +521,16 @@ float frontWheelControl(float desiredVelocity, float current_pos) { //steer cont
     }
   */
 
-
-
   //Serial.println(String(steer_contribution) + '\t' +  String(commanded_speed));
 
+  // The PID_Controller function will actually rotate the front motor!
   float current_vel = PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition);
 
   previous_t = current_t;
   oldPosition = relativePos - x_offset;
 }
 
-/* FUNCTION THAT RETURNS DESIRED ANGULAR VELOCITY OF FRONT WHEEL */
+/* Function that returns desired angular velocity of front wheel */
 float balanceController(float roll_angle, float roll_rate, float encoder_angle) {
   float desiredSteerRate = (k1 * roll_angle) + (k2 * roll_rate) + k3 * (encoder_angle - desired_steer);
   if (desiredSteerRate > 10) {
@@ -574,9 +580,12 @@ void loop() {
 
   analogWrite(PWM_rear, foreward_speed);
 
-  //RC controls front wheel
-  steer_range = map(pulse_time, 1100, 1900, -70, 70);
-  desired_steer = steer_range * .01 ;
+  // Note that we don't need to use the RC controller data here because
+  // we already handle the RC controller in interrupts (see calls of
+  // attachInterrupt)
+  // RC controls front wheel
+  // steer_range = map(pulse_time, 1100, 1900, -70, 70);
+  // desired_steer = steer_range * .01 ;
 
   //Nav controls front wheel
   //desired_steer = nav_instr;
@@ -587,10 +596,11 @@ void loop() {
   roll_t imu_data = updateIMUData();
   float desiredVelocity = balanceController(((1) * (imu_data.angle)), (1) * imu_data.rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
 
+  // frontWheelControl also sends the PWM signal to the front motor
   float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
 
-
-  //Do not change indexes since nav algorithim hard codes some of these
+  // Do not change bike_state indexes - some of them are hard-coded into
+  // the nav algorithm
   bike_state.data[0] = current_vel; //front motor (rad/s)
   bike_state.data[1] = desiredVelocity; //front motor (rad/s)
   bike_state.data[2] = encoder_position; //front motor (rad) (delta)
@@ -611,11 +621,11 @@ void loop() {
     Serial3.flush(); //WITHOUT THIS THE BUFFER WILL NOT BE ABLE TO BE READ AS FAST AS IT IS WRITTEN TO AND THIS WILL LOOP FOREVER
     //Serial.println(gps.location.isUpdated());
   }
+
   if (gps.time.isUpdated()) {
     prev_millis = curr_millis;
     curr_millis = millis();
-    if (curr_millis - prev_millis > 70)
-    {
+    if (curr_millis - prev_millis > 70) {
       Serial.print("AGE: "); Serial.println(curr_millis - prev_millis);
       Serial.print("Latitude                      "); Serial.println(gps.location.lat(), 6);
       Serial.print("Longitude                     "); Serial.println(gps.location.lng(), 6);
