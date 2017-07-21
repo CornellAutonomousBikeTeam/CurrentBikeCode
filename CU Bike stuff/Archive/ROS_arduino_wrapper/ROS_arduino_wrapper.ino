@@ -13,11 +13,17 @@ std_msgs::Float32MultiArray bike_state;
 //Array containing gps state variables
 std_msgs::Float32MultiArray gps_state;
 
+// Array containing pid controller debug variables
+std_msgs::Float32MultiArray pid_controller_data;
+
 //Publisher object for the bike state
 ros::Publisher state_pub("bike_state", &bike_state);
 
 //Publisher object for the gps state
 ros::Publisher gps_pub("gps", &gps_state);
+
+// Publisher object for the pid controller debug variables
+ros::Publisher pid_pub("pid", &pid_controller_data);
 
 float nav_instr = 0;
 void updateInstruction(const std_msgs::Float32& data) {
@@ -121,6 +127,12 @@ float commanded_speed ;
 
 #define relay3 50
 #define relay4 49
+
+// LEDs on bike
+// LED_1 is red, LED_2 is yellow, and LED_3 is blue
+#define LED_1 22
+#define LED_2 35
+#define LED_3 36
 
 //RC
 #define RC_CH1 51     //Steer Angle 
@@ -266,31 +278,49 @@ void setup()
   nh.initNode();
   int data_size = 12;
   int gps_state_data_size = 12;
+  int pid_data_size = 6;
   nh.subscribe(nav_sub);
   bike_state.data_length = data_size;
   gps_state.data_length = gps_state_data_size;
+  pid_controller_data.data_length = pid_data_size;
   bike_state.layout.data_offset = 0;
   gps_state.layout.data_offset = 0;
+  pid_controller_data.layout.data_offset = 0;
+
   //Allocate memory for the bike_state layout
   bike_state.layout.dim = (std_msgs::MultiArrayDimension *)
                           malloc(sizeof(std_msgs::MultiArrayDimension) * data_size);
+
   //Allocate memory for the gps_state layout
   gps_state.layout.dim = (std_msgs::MultiArrayDimension *)
                          malloc(sizeof(std_msgs::MultiArrayDimension) * data_size);
+
+  // Allocate memory for the pid_controller_data layout
+  pid_controller_data.layout.dim = (std_msgs::MultiArrayDimension *)
+      malloc(sizeof(std_msgs::MultiArrayDimension) * pid_data_size);
+
   bike_state.layout.dim[0].label = "desired_vel";
   bike_state.layout.dim[1].label = "current_vel";
   bike_state.layout.dim[2].label = "imu_rate";
   bike_state.layout.dim[3].label = "imu_angle";
   bike_state.layout.dim[4].label = "encoder_position";
   bike_state.layout.dim[5].label = "desired_steer";
-  //Allocate memory for the bike_state data
+
+  pid_controller_data.layout.dim[0].label = "current_pos";
+  pid_controller_data.layout.dim[1].label = "desired_pos";
+  pid_controller_data.layout.dim[2].label = "current_vel";
+  pid_controller_data.layout.dim[3].label = "sp_error";
+  pid_controller_data.layout.dim[4].label = "sv_error";
+  pid_controller_data.layout.dim[5].label = "total_error";
+
+  //Allocate memory for the outgoing data
   bike_state.data = (float *)malloc(sizeof(float) * data_size);
   gps_state.data = (float *)malloc(sizeof(float) * gps_state_data_size);
-
+  pid_controller_data = (float *)malloc(sizeof(float) * pid_data_size);
 
   nh.advertise(state_pub);
   nh.advertise(gps_pub);
-
+  nh.advertise(pid_pub);
 
   timer_start = 0;
   timer_start2 = 0;
@@ -388,7 +418,10 @@ void setup()
   pinMode(RC_CH5, INPUT);
   //pinMode(RC_CH6, INPUT);
 
-
+  // setup LED pins
+  pinMode(LED_1, OUTPUT);
+  pinMode(LED_2, OUTPUT);
+  pinMode(LED_3, OUTPUT);
 
   //setup Rear Motor
   pinMode(hall_pin, INPUT);
@@ -457,7 +490,7 @@ void landingGearUp() {
   digitalWrite(47, HIGH); //Sets relay pin 2 to low (turns light off)
 }
 
-/* takes in desired angular velocity returns pwm */
+/* takes in desired angular velocity, returns pwm. Currently unused. */
 int velocityToPWM (float desiredVelocity) {
   battery_voltage = analogRead(VOLTAGE_PIN);
   //Serial.println("pin 63 output " + String(battery_voltage));
@@ -476,8 +509,10 @@ int velocityToPWM (float desiredVelocity) {
 }
 
 
-/* intakes commanded velocity from balance controller
-   converts commanded velocity into commanded position */
+/*
+ * Takes in commanded velocity from balance controller, and converts
+ * commanded velocity into commanded position
+ */
 float eulerIntegrate(float desiredVelocity, float current_pos) {
   float desiredPosition = current_pos + desiredVelocity * ((float)interval / 1000000.0) ;
   return desiredPosition;
@@ -524,7 +559,13 @@ float frontWheelControl(float desiredVelocity, float current_pos) {
   //Serial.println(String(steer_contribution) + '\t' +  String(commanded_speed));
 
   // The PID_Controller function will actually rotate the front motor!
-  float current_vel = PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition);
+  float pid_controller_data_array[5];
+  float current_vel = PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition, pid_controller_data_array);
+
+  // Copy data from the PID controller into the outgoing ROS topic structure
+  for(int i = 0; i < 6; i++) {
+    pid_controller_data.data[i] = pid_controller_data_array[i];
+  }
 
   previous_t = current_t;
   oldPosition = relativePos - x_offset;
@@ -542,6 +583,7 @@ float balanceController(float roll_angle, float roll_rate, float encoder_angle) 
   return desiredSteerRate;
 }
 
+// A struct to hold the IMU information
 struct roll_t {
   float rate;
   float angle;
@@ -551,6 +593,7 @@ struct roll_t {
 // Retrieve data from IMU about roll angle and rate and return it
 struct roll_t updateIMUData() {
   roll_t roll_data;
+
   //get data from IMU
   float roll_angle = getIMU(0x01, 2);   //get roll angle
   float roll_rate = getIMU(0x26, 2);    //get roll rate
@@ -560,9 +603,11 @@ struct roll_t updateIMUData() {
   roll_data.yaw = yaw;
   return roll_data;
 }
+
 //Loop variables
 void loop() {
   numTimeSteps++;
+
   //Rear motor controller with RC to switch between controller and RC inputs
   if (pulse_time6 > 1700 && pulse_time6 < 2100) {
     foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
@@ -583,6 +628,7 @@ void loop() {
   // Note that we don't need to use the RC controller data here because
   // we already handle the RC controller in interrupts (see calls of
   // attachInterrupt)
+  //
   // RC controls front wheel
   // steer_range = map(pulse_time, 1100, 1900, -70, 70);
   // desired_steer = steer_range * .01 ;
@@ -596,7 +642,8 @@ void loop() {
   roll_t imu_data = updateIMUData();
   float desiredVelocity = balanceController(((1) * (imu_data.angle)), (1) * imu_data.rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
 
-  // frontWheelControl also sends the PWM signal to the front motor
+  // frontWheelControl also calls a function that sends the PWM signal to the front motor
+  // frontWheelControl will update the pid_controller_data.data array with new info
   float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
 
   // Do not change bike_state indexes - some of them are hard-coded into
@@ -664,6 +711,7 @@ void loop() {
   //Publish address of bike,gps state objects for ROS
   gps_pub.publish( &gps_state );
   state_pub.publish( &bike_state );
+  pid_pub.publish( &pid_controller_data );
   nh.spinOnce();
   //    delay(1);
 
