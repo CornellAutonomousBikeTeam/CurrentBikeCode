@@ -587,7 +587,7 @@ void loop() {
   roll_t imu_data = updateIMUData();
   float desiredVelocity = balanceController(((1) * (imu_data.angle)), (1) * imu_data.rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
 
-  float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
+  float current_vel = WheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
 
 
   //Do not change indexes since nav algorithim hard codes some of these
@@ -601,6 +601,7 @@ void loop() {
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
   bike_state.data[9] = imu_data.yaw; //yaw (rad)
+  Serial.print("SPEED: "); Serial.println(speed);
   //Serial.print("YAW: "); Serial.println(imu_data.yaw);
   //gps data (Don't change these indexes either)
   while (Serial3.available()) {

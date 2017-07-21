@@ -1,22 +1,27 @@
+#!/usr/bin/env python
 import csv
 import matplotlib
 import numpy as np
 import gps_assisted_simulator_node 
 import subprocess
-
+from std_msgs.msg import Float32
 import matplotlib
 from matplotlib import pyplot as plt
 
 import kalman
 import requestHandler
+from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import MultiArrayLayout
+from std_msgs.msg import MultiArrayDimension
 
 
-def bike_state(data)
+def bike_state(data):
     velocity = data.data[6]
     yaw = data.data[9]
     bike_vy = [velocity, yaw]
     
-def gps(data)
+def gps(data):
     #Important fields from data
     latitude = data.data[0] # In degrees
     longitude = data.data[1]
@@ -42,6 +47,8 @@ def listener():
         # The Kalman filter wants the GPS data in matrix form
         #Build matrix from gps x,y coordinates and bike velocity and yaw
         gps_matrix = np.matrix(gps_xy + bike_vy) 
+        #Confirms correct shape of matrix
+        rospy.loginfo(gps_matrix.shape)
         #save gps state values for later plotting
         gps_data.append(gps_matrix)
         # Run the Kalman filter - if we only have one point we can't run the filter yet
@@ -51,7 +58,7 @@ def listener():
             if len(gps_data) == 1:
                 output_matrix = kalman_real_time.kalman_no_loop(gps_matrix, np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]), 
                                                      (gps_data[-1], np.matrix([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]))) 
-            else 
+            else:
                 output_matrix = kalman_real_time.kalman_no_loop(gps_matrix, np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]), 
                                                      (kalman_state_matrix, p_state_matrix)) 
 
@@ -65,6 +72,7 @@ def listener():
             pub.publish(layout, kalman_state)
         rate.sleep()
         rospy.loginfo('SUCCESSFUL ITERATION')
+    kalman_data[0] = gps_data[0]
     rospy.loginfo('Test was terminated')
     # Plot the GPS data
     plt.scatter(gps_data[:,0], gps_data[:,1], c='r')
@@ -78,7 +86,7 @@ if __name__ == '__main__':
     gps_xy = [] #x,y converted from latitude and longitude from gps
     bike_vy = [] #bike velocity and yaw
     #kalman/gps data saved as we go for later plotting
-    kalman_data = [np.matrix[0]]
+    kalman_data = np.matrix([0])
     gps_data = []
     #state that is published to ROS
     kalman_state = []
