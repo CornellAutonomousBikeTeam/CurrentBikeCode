@@ -47,8 +47,6 @@ def listener():
         # The Kalman filter wants the GPS data in matrix form
         #Build matrix from gps x,y coordinates and bike velocity and yaw
         gps_matrix = np.matrix(gps_xy + bike_vy) 
-        #Confirms correct shape of matrix
-        rospy.loginfo(gps_matrix.shape)
         #save gps state values for later plotting
         gps_data.append(gps_matrix)
         # Run the Kalman filter - if we only have one point we can't run the filter yet
@@ -72,7 +70,6 @@ def listener():
             pub.publish(layout, kalman_state)
         rate.sleep()
         rospy.loginfo('SUCCESSFUL ITERATION')
-    kalman_data[0] = gps_data[0]
     rospy.loginfo('Test was terminated')
     # Plot the GPS data
     plt.scatter(gps_data[:,0], gps_data[:,1], c='r')

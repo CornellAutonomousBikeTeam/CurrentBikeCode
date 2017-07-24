@@ -5,7 +5,8 @@ int count = 0; //used to determine if we are running at 5hz
 int prev_millis = 0;
 int curr_millis = 0;
 int bits_so_far = 0;
-ros::NodeHandle  nh;
+//ros::NodeHandle  nh;
+ros::NodeHandle_<ArduinoHardware, 1, 3, 5000, 5000> nh;
 
 //Array containing bike state variables
 std_msgs::Float32MultiArray bike_state;
@@ -30,7 +31,9 @@ void updateInstruction(const std_msgs::Float32& data) {
   nav_instr = data.data;
 }
 //Ros listener
-ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction);
+uint32_t queue_size = 3000; 
+ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction, queue_size
+);
 
 float temp = 0;
 
