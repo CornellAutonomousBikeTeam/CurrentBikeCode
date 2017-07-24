@@ -55,27 +55,36 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   //scaled velocity error
   float sv_error =  (-K_d*current_vel)  ;  
   pid_controller_data[4] = sv_error;
+
   float total_error =  sp_error + sv_error ;
   pid_controller_data[5] = total_error;
 
   //print total error to get a sense of how high the values are for a normal sine wave.
 
+  // This pin sets the direction of the front wheel's rotation
   if (total_error > 0) {
     digitalWrite(DIR, LOW); 
   } else {
     digitalWrite(DIR, HIGH);
   }
 
-  //clip the maximum output to the motor by essentially saying "if the value is greater than this threshold, 
- //make the output to the motor this exact threshold value"
  //  Serial.println(String(current_pos) + "\t" + String(desired_pos) + "\t" + String(pos_error) + "\t" + String(total_error));
 
   oldPosition = x-x_offset;
-   if (total_error > 100 || total_error < -100) { 
-      analogWrite(PWM_front, 100);
-   } else { 
-      analogWrite(PWM_front, abs((int)(total_error))); 
-   }
-   return current_vel;
+
+  // Cast the output to the motor to an int
+  int motor_output = (int)total_error;
+
+  // We only want the magnitude of the output
+  motor_output = abs(motor_output);
+
+  // Maximium motor output magnitude should be 100
+  if(motor_output > 100) {
+    motor_output = 100;
+  }
+
+  // Write to the motor
+  analogWrite(PWM_front, motor_output);
+  return current_vel;
 }
 

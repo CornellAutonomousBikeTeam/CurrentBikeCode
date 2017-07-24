@@ -15,7 +15,7 @@
 /*Define functions*/
 //PID
 float PID_Controller(float, signed int, signed int, 
-  unsigned long, unsigned long, signed int);
+  unsigned long, unsigned long, signed int, float *);
 
 
 #endif //PID_h

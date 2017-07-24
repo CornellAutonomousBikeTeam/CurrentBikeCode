@@ -316,7 +316,7 @@ void setup()
   //Allocate memory for the outgoing data
   bike_state.data = (float *)malloc(sizeof(float) * data_size);
   gps_state.data = (float *)malloc(sizeof(float) * gps_state_data_size);
-  pid_controller_data = (float *)malloc(sizeof(float) * pid_data_size);
+  pid_controller_data.data = (float *)malloc(sizeof(float) * pid_data_size);
 
   nh.advertise(state_pub);
   nh.advertise(gps_pub);
@@ -477,6 +477,8 @@ void setup()
   //ramp up rear motor to 60 pwm
   rampToPWM(170, 0);
 
+  // LED to signal setup function done
+  digitalWrite(LED_3, HIGH);
 }
 
 
@@ -605,6 +607,7 @@ struct roll_t updateIMUData() {
 }
 
 //Loop variables
+int blinkState = HIGH;
 void loop() {
   numTimeSteps++;
 
@@ -714,12 +717,20 @@ void loop() {
   pid_pub.publish( &pid_controller_data );
   nh.spinOnce();
   //    delay(1);
+  digitalWrite(LED_3, blinkState);
+  if(blinkState == HIGH) {
+    blinkState = LOW;
+  } else {
+    blinkState = HIGH;
+  }
 
   l_diff = micros() - l_start;
   //Standardize the loop time by checking if it is currently less than the constant interval, if it is, add the differnce so the total loop time is standard
   if (l_diff < interval) {
+    digitalWrite(LED_2, HIGH);
     delayMicroseconds(interval - l_diff);
   } else {
+    digitalWrite(LED_2, LOW);
     //      Serial.println("LOOP LENGTH WAS VIOLATED. LOOP TIME WAS: " + String(l_diff));
     //      while(true){}
   }
