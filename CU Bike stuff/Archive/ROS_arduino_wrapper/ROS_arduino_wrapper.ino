@@ -478,7 +478,7 @@ void setup()
   rampToPWM(170, 0);
 
   // LED to signal setup function done
-  digitalWrite(LED_3, HIGH);
+  digitalWrite(LED_1, HIGH);
 }
 
 
@@ -723,9 +723,10 @@ void loop() {
   } else {
     blinkState = HIGH;
   }
-
+  
   l_diff = micros() - l_start;
   //Standardize the loop time by checking if it is currently less than the constant interval, if it is, add the differnce so the total loop time is standard
+  /*
   if (l_diff < interval) {
     digitalWrite(LED_2, HIGH);
     delayMicroseconds(interval - l_diff);
@@ -733,7 +734,7 @@ void loop() {
     digitalWrite(LED_2, LOW);
     //      Serial.println("LOOP LENGTH WAS VIOLATED. LOOP TIME WAS: " + String(l_diff));
     //      while(true){}
-  }
+  }*/
   //}
   /*
     Method that sets value "speed" to current speed in m/s
