@@ -8,6 +8,7 @@
 #include "Bike_State.h"
 #include "IMU.h"
 #include "Watchdog.h"
+#include "TinyGPS++.h"
 
 class Bike_State {
   public:
@@ -21,10 +22,11 @@ class Bike_State {
     float time;
     float desired_steer;
 
-    Rear_Motor_Controller *rear;
-    Front_Motor_Controller *front;
+    Rear_Motor_Controller rear;
+    Front_Motor_Controller front;
     RC_Handler rc;
     Watchdog doggo;
+    TinyGPSPlus gps;
 
     
 
