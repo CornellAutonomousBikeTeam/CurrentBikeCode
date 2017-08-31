@@ -1,15 +1,8 @@
- # CurrentBikeCode - UNSTABLE
- Master branch should have stable code only. If unstable, write unstable at the top.
+ # CurrentBikeCode
 
  ## Known Bugs
   - [ ] This repo needs a git ignore
   - [ ] Remove all pointers in code
- 
- ## Last commited by
- > Kenneth Fang
- 
- ## Reason for commit
-> Working on documentation for the code embedded in the README.md, and tracking the code that I will be working on cleaning for next summer
 
 ---
 # Documentation
