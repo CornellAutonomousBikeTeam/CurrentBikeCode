@@ -457,12 +457,12 @@ void setup()
   signed int y = REG_TC0_CV1;
   oldIndex = y;
   digitalWrite(DIR, HIGH);
-  /*
+  
     while(y==oldIndex){
     analogWrite(PWM_front,20);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");
-    }*/
+    }
 
   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
   x_offset = REG_TC0_CV0;
@@ -599,10 +599,24 @@ struct roll_t {
 struct roll_t updateIMUData() {
   roll_t roll_data;
 
-  //get data from IMU
-  float roll_angle = getIMU(0x01, 2);   //get roll angle
-  float roll_rate = getIMU(0x26, 2);    //get roll rate
-  float yaw = getIMU(0x01, 1);          //get yaw
+  float imu_data[3];
+
+  // Get roll angle and yaw
+  getIMU(0x01, &imu_data[0]); // After this, imu_data has 3 floats
+
+  // Recover roll angle and yaw
+  float roll_angle = imu_data[2];
+  float yaw = imu_data[1];
+
+  // Get roll rate
+  getIMU(0x26, &imu_data[0]);
+
+  // Recover roll rate
+  float roll_rate = imu_data[2];
+
+  Serial.println(string(roll_angle) + '\t' + string(roll_rate) + '\t' + string(yaw));
+
+  // Populate struct
   roll_data.angle = roll_angle;
   roll_data.rate = roll_rate;
   roll_data.yaw = yaw;
@@ -664,7 +678,7 @@ void loop() {
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
   bike_state.data[9] = imu_data.yaw; //yaw (rad)
-  Serial.print("SPEED: "); Serial.println(speed);
+  //Serial.print("SPEED: "); Serial.println(speed);
   //Serial.print("YAW: "); Serial.println(imu_data.yaw);
   //gps data (Don't change these indexes either)
   while (Serial3.available()) {
@@ -678,6 +692,7 @@ void loop() {
   if (gps.time.isUpdated()) {
     prev_millis = curr_millis;
     curr_millis = millis();
+    /*
     if (curr_millis - prev_millis > 70) {
       Serial.print("AGE: "); Serial.println(curr_millis - prev_millis);
       Serial.print("Latitude                      "); Serial.println(gps.location.lat(), 6);
@@ -692,7 +707,7 @@ void loop() {
       Serial.print("Course in degrees             "); Serial.println(gps.course.deg());
       Serial.print("Bits so far             "); Serial.println(bits_so_far);
 
-    }
+    }*/
     //}
     //Serial.print("Valid remaining data: "); Serial.println(gps.charsProcessed());
     //Serial.print("Sentences that failed checksum="); Serial.println(gps.failedChecksum());

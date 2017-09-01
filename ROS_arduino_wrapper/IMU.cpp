@@ -3,13 +3,14 @@
 /*IMU Setup and Functions*/
 /////////////////////////////////////////////////////////////////////////////////////
 SPISettings settings(6000000, MSBFIRST, SPI_MODE0 ); //variable to hold SPI settings
-
+/*
 union u_data {
     byte b[4];
     float fval;
 } data[3]; // Create 3 unions, one for each value from the IMU
            // Euler angle: x-axis (pitch), y-axis (yaw), z-axis (roll)
-           // Gyroscope: x-axis (pitch rate), y-axis (yaw rate), z-axis (roll rate)
+           // Gyroscope: x-axis (pitch rate), y-axis (yaw rate), z-axis (roll rate)*/
+float data[3];
 
 //function to transfer commands through SPI
 byte transferByte(byte byteToWrite) {     
@@ -102,7 +103,11 @@ void initIMU(void){
 //     
 //}
 
-float getIMU(byte commandToWrite, int x){
+/*
+ * commandToWrite is the byte command to send to the IMU.
+ * data is a pre-initialized 3-float array.
+ */
+void getIMU(byte commandToWrite, float *data){
     SPI.beginTransaction(settings);
 //   float l_start = micros();
   /*Setup bytes to write*/
@@ -140,25 +145,24 @@ float getIMU(byte commandToWrite, int x){
   }
 //  float l_diff = micros()- l_start;
 //  Serial.println(l_diff);
+  byte data_buff[4]; //Holds four bytes of data that come off of IMU; REF: https://yostlabs.com/wp/wp-content/downloads/3-Space/YEI_TSS_Users_Manual_3.0_r1_4Nov2014.pdf 4.5 command overview
+ 
   if (idle == 1){
     // Get the 12 bytes of return data from the device: 
     for (int ii=0; ii<3; ii++) {
-      for (int jj=0; jj<4; jj++) {
-        data[ii].b[jj] =  transferByte(0xFF);
+      
+      for (int jj=3; jj>=0; jj--) {
+        data_buff[jj] =  transferByte(0xFF);
       }
+
+      // Viewing data_buff as a float, put it in the data array
+      data[ii] = *((float *)(&data_buff[0]));
     }    
    
     SPI.endTransaction();
-  
-    //Swap bytes from big endian to little endian
-    for( int mm=0; mm<3; mm++) {
-      endianSwap(data[mm].b);
-    }
-    
-    return data[x].fval;  //returns roll angle or roll rate
 
   }else{
-    getIMU(commandToWrite, x);
+    getIMU(commandToWrite, data);
   }
 }
 
