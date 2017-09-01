@@ -614,7 +614,7 @@ struct roll_t updateIMUData() {
   // Recover roll rate
   float roll_rate = imu_data[2];
 
-  Serial.println(string(roll_angle) + '\t' + string(roll_rate) + '\t' + string(yaw));
+  Serial.println(String(roll_angle) + '\t' + String(roll_rate) + '\t' + String(yaw));
 
   // Populate struct
   roll_data.angle = roll_angle;
