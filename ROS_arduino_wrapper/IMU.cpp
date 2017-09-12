@@ -2,7 +2,7 @@
 
 /*IMU Setup and Functions*/
 /////////////////////////////////////////////////////////////////////////////////////
-SPISettings settings(6000000, MSBFIRST, SPI_MODE0 ); //variable to hold SPI settings
+SPISettings settings(6000000, MSBFIRST, SPI_MODE0 ); //variable to hold SPI settings this is only 6 times per second
 
 union u_data {
     byte b[4];
@@ -132,7 +132,7 @@ float getIMU(byte commandToWrite, int x){
   while (result != 0x01 && (idle == 1 || counter < 11)) {  // Repeat until device is Ready 
     delay(1);
     result = transferByte(0xFF);
-//    Serial.print("Status of device. Result: "),Serial.println(result);
+    SerialUSB.print("Status of device. Result: "),SerialUSB.println(result);
     if (result == 0){
       idle = 0;
       counter ++;

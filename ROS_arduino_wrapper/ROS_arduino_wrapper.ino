@@ -4,9 +4,10 @@
 int count = 0; //used to determine if we are running at 5hz
 int prev_millis = 0;
 int curr_millis = 0;
+int total_millis = 0;
 int bits_so_far = 0;
 //ros::NodeHandle  nh;
-ros::NodeHandle_<ArduinoHardware, 1, 3, 5000, 5000> nh;
+ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500 
 
 //Array containing bike state variables
 std_msgs::Float32MultiArray bike_state;
@@ -32,8 +33,7 @@ void updateInstruction(const std_msgs::Float32& data) {
 }
 //Ros listener
 uint32_t queue_size = 3000; 
-ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction, queue_size
-);
+ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction, queue_size);
 
 float temp = 0;
 
@@ -332,7 +332,8 @@ void setup()
   attachInterrupt(RC_CH2, calcSignal2, CHANGE);
   attachInterrupt(RC_CH6, calcSignal6, CHANGE);
 
-  Serial.begin(57600); //Set to the same rate as ROS for correct Serial connections
+  SerialUSB.begin(115200);
+  Serial.begin(115200); //Set to the same rate as ROS for correct Serial connections
   //GPS
   // GPS baudrate (gps hardware runs natively at 9600)
   Serial3.begin(9600); //This was originally 9600 - test with higher baud rates
@@ -457,12 +458,13 @@ void setup()
   signed int y = REG_TC0_CV1;
   oldIndex = y;
   digitalWrite(DIR, HIGH);
-  /*
+
+  
     while(y==oldIndex){
     analogWrite(PWM_front,20);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");
-    }*/
+    }
 
   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
   x_offset = REG_TC0_CV0;
@@ -602,7 +604,7 @@ struct roll_t updateIMUData() {
   //get data from IMU
   float roll_angle = getIMU(0x01, 2);   //get roll angle
   float roll_rate = getIMU(0x26, 2);    //get roll rate
-  float yaw = getIMU(0x01, 1);          //get yaw
+  float yaw = getIMU(0x01, 1); //get yaw
   roll_data.angle = roll_angle;
   roll_data.rate = roll_rate;
   roll_data.yaw = yaw;
@@ -644,13 +646,15 @@ void loop() {
 
   l_start = micros();
   float encoder_position = updateEncoderPosition(); //output is current position wrt front zero
-
+  SerialUSB.println("Got encoder position");
   roll_t imu_data = updateIMUData();
+  SerialUSB.println("Got IMU data");
   float desiredVelocity = balanceController(((1) * (imu_data.angle)), (1) * imu_data.rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
-
+  SerialUSB.println("Got desired velocity");
   // frontWheelControl also calls a function that sends the PWM signal to the front motor
   // frontWheelControl will update the pid_controller_data.data array with new info
   float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
+  SerialUSB.println("Got current velocity");
 
   // Do not change bike_state indexes - some of them are hard-coded into
   // the nav algorithm
@@ -664,7 +668,6 @@ void loop() {
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
   bike_state.data[9] = imu_data.yaw; //yaw (rad)
-  Serial.print("SPEED: "); Serial.println(speed);
   //Serial.print("YAW: "); Serial.println(imu_data.yaw);
   //gps data (Don't change these indexes either)
   while (Serial3.available()) {
@@ -675,10 +678,10 @@ void loop() {
     //Serial.println(gps.location.isUpdated());
   }
 
-  if (gps.time.isUpdated()) {
+  /*if (gps.time.isUpdated()) {
     prev_millis = curr_millis;
-    curr_millis = millis();
-    if (curr_millis - prev_millis > 70) {
+    curr_millis = millis();*/
+    /*if (curr_millis - prev_millis > 70) {
       Serial.print("AGE: "); Serial.println(curr_millis - prev_millis);
       Serial.print("Latitude                      "); Serial.println(gps.location.lat(), 6);
       Serial.print("Longitude                     "); Serial.println(gps.location.lng(), 6);
@@ -692,14 +695,14 @@ void loop() {
       Serial.print("Course in degrees             "); Serial.println(gps.course.deg());
       Serial.print("Bits so far             "); Serial.println(bits_so_far);
 
-    }
+    }*/
     //}
     //Serial.print("Valid remaining data: "); Serial.println(gps.charsProcessed());
     //Serial.print("Sentences that failed checksum="); Serial.println(gps.failedChecksum());
     // Testing overflow in SoftwareSerial is sometimes useful too.
     //Serial.print("Soft Serial device overflowed? "); Serial.println(Serial3.overflow() ? "YES!" : "No");
     //Serial.print("Serial3 read in"); Serial.println(Serial.read());
-  }
+ // }
   gps_state.data[0] = gps.location.lat(); //latitude (deg)
   gps_state.data[1] = gps.location.lng(); //longitude (deg)
   gps_state.data[2] = gps.time.hour(); // Hour (0-23)
@@ -711,7 +714,7 @@ void loop() {
   gps_state.data[8] = gps.speed.mps(); //speed from gps (m/s)
   gps_state.data[9] = gps.hdop.value(); // Horizontal Dim. of Precision (100ths-i32)
   gps_state.data[10] = curr_millis - prev_millis; //Time since last update
- gps_state.data[11] = bits_so_far; //Time since last update
+  gps_state.data[11] = bits_so_far; //Time since last update
   bits_so_far = 0;
   //gps_state.data[5] = (gps.time.centisecond()); // 100ths of a second (0-99)
   //Publish address of bike,gps state objects for ROS
@@ -719,6 +722,8 @@ void loop() {
   state_pub.publish( &bike_state );
   pid_pub.publish( &pid_controller_data );
   nh.spinOnce();
+  prev_millis = curr_millis;
+  curr_millis = millis();
   //    delay(1);
   digitalWrite(LED_3, blinkState);
   if(blinkState == HIGH) {
@@ -726,9 +731,15 @@ void loop() {
   } else {
     blinkState = HIGH;
   }
-  
+  total_millis = total_millis + (curr_millis - prev_millis);
+  //SerialUSB.println("Total millis: " + String(total_millis));
+  count += 1;
+  if(total_millis >= 1000){
+    SerialUSB.println("RUNNING AT" + String(count) + " HZ");
+    total_millis = 0;
+    count = 0;
+  }
   l_diff = micros() - l_start;
-  //Standardize the loop time by checking if it is currently less than the constant interval, if it is, add the differnce so the total loop time is standard
   /*
   if (l_diff < interval) {
     digitalWrite(LED_2, HIGH);
@@ -742,7 +753,6 @@ void loop() {
   /*
     Method that sets value "speed" to current speed in m/s
   */
-
 
 }
 
