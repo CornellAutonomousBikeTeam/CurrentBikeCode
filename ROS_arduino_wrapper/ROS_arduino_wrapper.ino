@@ -461,7 +461,7 @@ void setup()
 
   
     while(y==oldIndex){
-    analogWrite(PWM_front,20);
+    analogWrite(PWM_front,50);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");
     }

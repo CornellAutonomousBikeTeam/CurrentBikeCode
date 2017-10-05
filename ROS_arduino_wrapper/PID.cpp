@@ -79,8 +79,8 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   motor_output = abs(motor_output);
 
   // Maximium motor output magnitude should be 100
-  if(motor_output > 100) {
-    motor_output = 100;
+  if(motor_output > 255) {
+    motor_output = 255;
   }
 
   // Write to the motor
