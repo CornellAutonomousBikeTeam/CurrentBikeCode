@@ -1,66 +1,111 @@
 #include "IMU_Serial.h"
+const byte numChars = 26;
+char receivedChars[numChars]; // an array to store the received data
+
+boolean newData = false; //Whether Arduino reached the end of the message
+
+
 void setup() {
   // put your setup code here, to run once:
   initIMU();
-  Serial.begin(9600);
-  //Serial1.write(":232\n"); 
-
+  Serial.begin(9600); //set baud rate to 9600
+    // A struct to hold the tared euler angles from IMU
+  struct tared {
+    float rate;
+    float angle;
+    float yaw; 
+  };
+  // A struct to hold the gyroscope info
+  struct gyro {
+    float axis1;
+    float axis2;
+    float axis3;
+  };
+  
+  /*
+   * 80 (0x50) means "Set streaming slots"
+   * 44 means it will run the command "Get temperature F"
+   * 255 is used to fill the remaining command slots (8 slots total)
+   */
+  Serial1.write(":80,1,38,255,255,255,255,255,255\n");
+  Serial1.write(":221,4\n");
+  /*
+   * Command byte: 82 (0x52) means "Set streaming timing"
+   * 1st parameter: 20000 means it will output data 50 times 
+   *  a second (0 means as fast as possible)
+   * 2nd parameter: how long session will run; -1 means the 
+   *  session will run indefinitely until a stop streaming command is 
+   *  explicitly issued
+   * 3rd parameter: delay in ms before beginning streaming; 0 means 
+   *  the start delay is 0 milliseconds before the sensor actually 
+   *  begins streaming
+   */
+  Serial1.write(":82,20000,-1,0\n");
+  /*
+   * First byte: semicolon means return with response header
+   *  specified in command 221 above
+   * Second byte: 85 means start streaming session
+   */
+  Serial1.write(";85\n");//Start the streaming session with response header
+  //Serial1.write(":85\n");//Start the streaming session without response header
   
 }
-//  method for sending hex messages to the gps
-void sendMSG(byte *msg, byte msgLength) {
-  for (int i = 0; i < msgLength; i++) {
-    Serial1.write(msg[i]);
-  }
-}
-
-struct roll_t {
-  float rate;
-  float angle;
-  float yaw; 
-};
-
-// Retrieve data from IMU about roll angle and rate and return it
-struct roll_t updateIMUData() {
-  roll_t roll_data;
-
-  //get data from IMU
-  float roll_angle = getIMU(0x01, 2);   //get roll angle
-  float roll_rate = getIMU(0x26, 2);    //get roll rate
-  float yaw = getIMU(0x01, 1); //get yaw
-  roll_data.angle = roll_angle;
-  roll_data.rate = roll_rate;
-  roll_data.yaw = yaw;
-  return roll_data;
-}
-
 void loop() {
-  byte poll_imu_tared_orientation[] = {0xF7, 0x01, 0x00, 0x01};
-  //byte set_baud[] = {0xF7, 0xE7, 0x00, 0x01};
-  //sendMSG(poll_imu_tared_orientation, sizeof(poll_imu_tared_orientation));
-  Serial1.write(":1\n"); 
-  //sendMSG(poll_imu_tared_orientation, sizeof(poll_imu_tared_orientation));
-  Serial.println("Sent message for data");
-  while(Serial1.available()){
-    if(Serial1.peek() == '\n'){
-      //Serial.println("new line");
-      Serial1.read();
-      //Old way - Serial1.readString();
+ recvWithStartEndMarkers();
+ showNewData();
+}
 
-    }
-    else{
-      Serial.println(Serial1.read());
-      //Old way - Serial.println(Serial1.readString());
+void recvWithStartEndMarkers() {
+ //static keyword is used to create variables for one function
+ //They are different from local variables in that they persist between calls
+ static boolean recvInProgress = false;
+ static byte index = 0;
+ char startMarker = '\0';
+ char endMarker = '\n';
+ char rc; //Received character
+ 
+ // if (Serial.available() > 0) {
+ /*
+ Serial.available() is the data already stored in the serial receive buffer (64 bytes)
+ Serial.available() > 0 means that there is data available for reading
+ newData is True when Arduino received the full message (hit the endMarker \n)
+ */
+ while (Serial1.available() > 0 && newData == false) {
+  rc = Serial1.read(); //Read the next character in the serial buffer
 
-    }
+  //If reading the message
+  if (recvInProgress == true) {
+    //The next character is not \n
+    if (rc != endMarker) {
+      receivedChars[index] = rc; //Add the next character to the array
+      index++; //Move the index to the next character
+      /*
+      If we haven't hit the end of the message but have read 12 characters, keep
+      reading for the last character
+      */
+      if (index >= numChars) {
+        index = numChars - 1;
+      }
+     }
+     //If we reached the \n character
+     else {
+      receivedChars[index] = '\0'; // terminate the string with null character
+      recvInProgress = false; //Done reading this message
+      index = 0; //Reset the index
+      newData = true; //Arduino has received the full message
+     }
+   }
+   //If the next character indicates the start of a message, read the message
+   else if (rc == startMarker) {
+      recvInProgress = true; 
+   }
   }
-  //delay(10);
-  // put your main code here, to run repeatedly:
-  //float roll_angle = getIMU(0x01, 2);   //get roll angle
-  //float roll_rate = getIMU(0x26, 2);    //get roll rate
-  //float yaw = getIMU(0x01, 1); //get yaw
-  /*Serial.print("Roll angle: ");  Serial.println(roll_angle);
-  Serial.print("Roll rate: ");  Serial.println(roll_rate);
-  Serial.print("Yaw: ");  Serial.println(yaw);*/
+}
 
+void showNewData() {
+ if (newData == true) {
+ Serial.print("This just in ... ");
+ Serial.println(receivedChars);
+ newData = false;
+ }
 }
