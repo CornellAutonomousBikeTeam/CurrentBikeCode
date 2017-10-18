@@ -1,9 +1,8 @@
 #include "IMU_Serial.h"
 
 void setup() {
-  // put your setup code here, to run once:
   initIMU();
-  Serial.begin(19200);
+  //Serial.begin(19200); //Testing purposes - Serial Monitor
 }
 
 struct roll_t {
@@ -12,7 +11,7 @@ struct roll_t {
   float yaw;
 };
 
-roll_t roll_data;
+roll_t imu_data;
 float euler_angles[3];
 float gyro_rate[3];
 
@@ -42,12 +41,16 @@ void readBuffer(String command) {
   String data;
   while(Serial1.available()){
     if(Serial1.peek() == '\n'){
+      if (i == 2 && command.equals("euler")) {
+        euler_angles[i] = data.toFloat();
+      }
+      else if (i == 2) gyro_rate[i] = data.toFloat();
       Serial1.read();
       Serial.println();
     }
     else{
       char ch = Serial1.read();
-      if (String(ch).equals(",")) {
+      if (ch == ',') {
           if (command.equals("euler")) euler_angles[i] = data.toFloat();
           else gyro_rate[i] = data.toFloat();
           //Serial.println(data);
