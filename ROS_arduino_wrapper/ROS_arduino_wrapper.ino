@@ -617,19 +617,21 @@ void loop() {
   numTimeSteps++;
 
   //Rear motor controller with RC to switch between controller and RC inputs
-  if (pulse_time6 > 1700 && pulse_time6 < 2100) {
+ // if (pulse_time6 > 1700 && pulse_time6 < 2100) {
     foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
-  }
-  else {
-    rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
-    if (rear_pwm > 180) {
-      rear_pwm = 180;
-    }
-    if (rear_pwm < 60) {
-      rear_pwm = 60;
-    }
-    foreward_speed = rear_pwm;
-  }
+    Serial.println(pulse_time2);
+    Serial.print(pulse_time);
+  /*}
+  //else {
+   // rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
+   // if (rear_pwm > 180) {
+   //   rear_pwm = 180;
+   // }
+   // if (rear_pwm < 60) {
+   //   rear_pwm = 60;
+   // }
+    //foreward_speed = rear_pwm;
+  }*/
 
   analogWrite(PWM_rear, foreward_speed);
 
@@ -638,8 +640,9 @@ void loop() {
   // attachInterrupt)
   //
   // RC controls front wheel
-  // steer_range = map(pulse_time, 1100, 1900, -70, 70);
-  // desired_steer = steer_range * .01 ;
+   steer_range = map(pulse_time, 1100, 1900, -70, 70);
+   desired_steer = steer_range * .01 ;
+  
 
   //Nav controls front wheel
   //desired_steer = nav_instr;
