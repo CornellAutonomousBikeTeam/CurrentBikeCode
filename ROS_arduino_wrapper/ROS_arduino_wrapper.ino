@@ -76,8 +76,8 @@ long l_start;
 long l_diff;
 
 //Balance Control constants
-const int k1 = 71; //phi = lean
-const int k2 = 10; //was previously 21 //phidot=lean rate
+const int k1 = 235; //phi = lean
+const int k2 = 135; //was previously 21 //phidot=lean rate
 const int k3 = -20; //delta=steer
 
 //Encoder
@@ -617,10 +617,36 @@ void loop() {
   numTimeSteps++;
 
   //Rear motor controller with RC to switch between controller and RC inputs
-  if (pulse_time6 > 1700 && pulse_time6 < 2100) {
-    foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
-  }
-  else {
+  //if (pulse_time6 > 1700 && pulse_time6 < 2100) {
+    foreward_speed = map(pulse_time2, 1100, 1900, 0, 18);
+
+    /*Map foreward_speed range [0, 200] to radians per second [0 rad/s, 18 rad/s] and discretize it. Convert radians per second
+    to meters per second in the range [0 m/s, 3.3 m/s]. Map these values back to foreward_speed range [0, 200] */
+    if(foreward_speed > 0 && foreward_speed <= 2.7){
+      foreward_speed = velocityToPWM(2.7)*200/maxfront_PWM;     //0.495 m/s
+    }
+    if(foreward_speed > 2.7 && foreward_speed <= 5.4){
+      foreward_speed = velocityToPWM(5.4)*200/maxfront_PWM;     //0.999 m/s
+    }
+    if(foreward_speed > 5.4 && foreward_speed <= 8.1){
+      foreward_speed = velocityToPWM(8.1)*200/maxfront_PWM;     //1.498 m/s
+    }
+    if(foreward_speed > 8.1 && foreward_speed <= 10.8){
+      foreward_speed = velocityToPWM(10.8)*200/maxfront_PWM;    //1.998 m/s
+    }
+    if(foreward_speed > 10.8 && foreward_speed <= 13.5){
+      foreward_speed = velocityToPWM(13.5)*200/maxfront_PWM;    //2.497 m/s
+    }
+    if(foreward_speed > 13.5 && foreward_speed <= 16.2){
+      foreward_speed = velocityToPWM(16.2)*200/maxfront_PWM;    //2.997 m/s
+    }
+    if(foreward_speed > 16.2 && foreward_speed <= 18){
+      foreward_speed = velocityToPWM(18)*200/maxfront_PWM;      //3.3 m/s
+    } 
+    
+  //}
+  /* RC switch broken: remove 
+   * else {
     rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
     if (rear_pwm > 180) {
       rear_pwm = 180;
@@ -629,8 +655,8 @@ void loop() {
       rear_pwm = 60;
     }
     foreward_speed = rear_pwm;
-  }
-
+  }*/
+  
   analogWrite(PWM_rear, foreward_speed);
 
   // Note that we don't need to use the RC controller data here because
@@ -638,23 +664,21 @@ void loop() {
   // attachInterrupt)
   //
   // RC controls front wheel
-  // steer_range = map(pulse_time, 1100, 1900, -70, 70);
-  // desired_steer = steer_range * .01 ;
-
-  //Nav controls front wheel
+   steer_range = map(pulse_time, 1100, 1900, -70, 70);
+   desired_steer = steer_range * .01 ;  //Nav controls front wheel
   //desired_steer = nav_instr;
 
   l_start = micros();
   float encoder_position = updateEncoderPosition(); //output is current position wrt front zero
-  SerialUSB.println("Got encoder position");
+  //SerialUSB.println("Got encoder position");
   roll_t imu_data = updateIMUData();
-  SerialUSB.println("Got IMU data");
+  //SerialUSB.println("Got IMU data");
   float desiredVelocity = balanceController(((1) * (imu_data.angle)), (1) * imu_data.rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
-  SerialUSB.println("Got desired velocity");
+ // SerialUSB.println("Got desired velocity");
   // frontWheelControl also calls a function that sends the PWM signal to the front motor
   // frontWheelControl will update the pid_controller_data.data array with new info
   float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
-  SerialUSB.println("Got current velocity");
+  //SerialUSB.println("Got current velocity");
 
   // Do not change bike_state indexes - some of them are hard-coded into
   // the nav algorithm
@@ -668,6 +692,8 @@ void loop() {
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
   bike_state.data[9] = imu_data.yaw; //yaw (rad)
+
+  Serial.print("Velocity: "); Serial.println(speed);
   //Serial.print("YAW: "); Serial.println(imu_data.yaw);
   //gps data (Don't change these indexes either)
   while (Serial3.available()) {
@@ -735,7 +761,7 @@ void loop() {
   //SerialUSB.println("Total millis: " + String(total_millis));
   count += 1;
   if(total_millis >= 1000){
-    SerialUSB.println("RUNNING AT" + String(count) + " HZ");
+    //SerialUSB.println("RUNNING AT" + String(count) + " HZ");
     total_millis = 0;
     count = 0;
   }
