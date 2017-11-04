@@ -1,3 +1,4 @@
+
 #include <ros.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
@@ -47,6 +48,7 @@ TinyGPSPlus gps;
 
 
 /*Define definite variables*/
+
 //Front Motor
 #define PWM_front 9
 #define DIR 46
@@ -112,6 +114,17 @@ int n = 0;
 float desired_steer = 0;
 float desired_pos_array[250];
 float theo_position = 0;
+
+//IMU
+// A struct to hold the IMU information
+struct roll_t {
+  float roll_angle;
+  float roll_rate;
+  float yaw; 
+};
+roll_t imu_data;
+float euler_angles[3]; //array that contains euler angles in pitch, yaw, roll order
+float gyro_rate[3]; //array that contains the corrected gyro rate in radians/sec
 
 //Watchdog
 #define WDI 42
@@ -361,6 +374,7 @@ void setup()
   sendUBX(gpsmsgSaveConf, sizeof(gpsmsgSaveConf));
   Serial3.end();
   Serial3.begin(57600);
+  Serial1.begin(115200);
   initIMU();
   //setup rc
   //  pinMode(front_steer_value, INPUT);
@@ -459,7 +473,8 @@ void setup()
   oldIndex = y;
   digitalWrite(DIR, HIGH);
 
-  
+    //Front wheel calibration
+    
     while(y==oldIndex){
     analogWrite(PWM_front,50);
     y = REG_TC0_CV1;
@@ -590,14 +605,9 @@ float balanceController(float roll_angle, float roll_rate, float encoder_angle) 
   return desiredSteerRate;
 }
 
-// A struct to hold the IMU information
-struct roll_t {
-  float rate;
-  float angle;
-  float yaw; 
-};
 
-// Retrieve data from IMU about roll angle and rate and return it
+//OLD Retrieve data from IMU about roll angle and rate and return it
+/*
 struct roll_t updateIMUData() {
   roll_t roll_data;
 
@@ -610,6 +620,8 @@ struct roll_t updateIMUData() {
   roll_data.yaw = yaw;
   return roll_data;
 }
+*/
+
 
 //Loop variables
 int blinkState = HIGH;
@@ -646,15 +658,16 @@ void loop() {
 
   l_start = micros();
   float encoder_position = updateEncoderPosition(); //output is current position wrt front zero
-  SerialUSB.println("Got encoder position");
-  roll_t imu_data = updateIMUData();
-  SerialUSB.println("Got IMU data");
-  float desiredVelocity = balanceController(((1) * (imu_data.angle)), (1) * imu_data.rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
-  SerialUSB.println("Got desired velocity");
+  //Serial.println("Got encoder position");
+  //roll_t imu_data = updateIMUData();
+  updateIMUDataSerial();
+  //Serial.println("Got IMU data");
+  float desiredVelocity = balanceController(((1) * (imu_data.roll_angle)), (1) * imu_data.roll_rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
+  //Serial.println("Got desired velocity");
   // frontWheelControl also calls a function that sends the PWM signal to the front motor
   // frontWheelControl will update the pid_controller_data.data array with new info
   float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
-  SerialUSB.println("Got current velocity");
+  //Serial.println("Got current velocity");
 
   // Do not change bike_state indexes - some of them are hard-coded into
   // the nav algorithm
@@ -662,8 +675,8 @@ void loop() {
   bike_state.data[1] = desiredVelocity; //front motor (rad/s)
   bike_state.data[2] = encoder_position; //front motor (rad) (delta)
   bike_state.data[3] = desired_steer; //front motor (rad)
-  bike_state.data[4] = imu_data.rate; //imu (rad) (phi-dot)
-  bike_state.data[5] = imu_data.angle; //imu (rad/s) (phi)
+  bike_state.data[4] = imu_data.roll_angle; //imu (rad) (phi-dot)
+  bike_state.data[5] = imu_data.roll_rate; //imu (rad/s) (phi)
   bike_state.data[6] = speed; //rear motor (m/s) (based on hall sensor)
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
@@ -721,6 +734,7 @@ void loop() {
   gps_pub.publish( &gps_state );
   state_pub.publish( &bike_state );
   pid_pub.publish( &pid_controller_data );
+  //Serial.println("published");
   nh.spinOnce();
   prev_millis = curr_millis;
   curr_millis = millis();
@@ -735,7 +749,7 @@ void loop() {
   //SerialUSB.println("Total millis: " + String(total_millis));
   count += 1;
   if(total_millis >= 1000){
-    SerialUSB.println("RUNNING AT" + String(count) + " HZ");
+    //SerialUSB.println("RUNNING AT" + String(count) + " HZ");
     total_millis = 0;
     count = 0;
   }
@@ -754,9 +768,11 @@ void loop() {
     Method that sets value "speed" to current speed in m/s
   */
 
+  
 }
 
 
 
 //}
+
 

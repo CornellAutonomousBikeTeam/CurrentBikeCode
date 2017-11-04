@@ -15,9 +15,14 @@
 //Initialize IMU
 void initIMU(void);
 
-//IMU data
-float getIMU(byte, int);
+//New retrieve IMU data
+void readBuffer(float[]);
+void updateIMUDataSerial(void);
+
+//Old retrieve IMU data
+//float getIMU(byte, int);
 
 
 #endif //IMU_h
+
 

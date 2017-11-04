@@ -44,6 +44,8 @@ void initIMU(void){
   //Initialize SPI
   SPI.begin();
   SPI.beginTransaction(settings);
+  //Initialize serial
+  Serial1.begin(115200);
 }
 /*
   SPI.transfer(0x50); //set streaming slots
@@ -102,10 +104,64 @@ void initIMU(void){
 //     
 //}
 
+//NEW retrieve IMU data
+void readBuffer(float dataArray[]) {
+  int i = 0;
+  String data;
+  while(Serial1.available()) {
+    if(Serial1.peek() == '\n') { //at end of response packet
+      Serial1.read();
+      if (i == 2) {
+        dataArray[i] = data.toFloat(); //if last value in data, since no comma at end
+      }
+    }
+    else {
+      char ch = Serial1.read();
+      if (ch == ',') { //delimiter between values
+        dataArray[i] = data.toFloat();
+        data = "";
+        i++;
+      }
+      else data += ch;
+    }
+  }
+}
+
+
+void updateIMUDataSerial() {
+  Serial1.write(":1\n"); //send command to get euler angles for orientation
+  //Serial.println("Sent command for euler angles");
+  readBuffer(euler_angles); //parse the 3 euler angles and put them into an array
+
+  /*
+  From our tests 5 ms is the minimum delay we need to give the IMU a chance to
+  respond. At 4 ms or less we will get errors like "Lost sync with device"
+  and "Serial Port read returned short ..."
+  */
+  delay(5);
+  
+  //Serial.println("Sent command for gyro");
+  Serial1.write(":38\n"); //send command to get gyro rate
+  readBuffer(gyro_rate); //parse the 3 gyro rates and put them into an array
+  
+  imu_data.roll_angle = euler_angles[2];
+  imu_data.yaw = euler_angles[1];
+  imu_data.roll_rate = gyro_rate[2];
+  //Serial.print("Roll angle: ");
+  //Serial.println(imu_data.roll_angle, 10);
+  //Serial.print("Roll rate: ");
+  //Serial.println(gyro_rate[2], 10);
+  //Serial.print("Yaw: ");
+  //Serial.println(imu_data.yaw, 10);
+}
+
+
+/* OLD retrieve IMU data
 float getIMU(byte commandToWrite, int x){
-    SPI.beginTransaction(settings);
+
+    //SPI.beginTransaction(settings);
 //   float l_start = micros();
-  /*Setup bytes to write*/
+  //Setup bytes to write
   // Clear the internal data buffer on the IMU
   byte result = transferByte(0x01);
       //Serial.print("Cleared internal buffer. Result: "),Serial.println(result);
@@ -132,14 +188,14 @@ float getIMU(byte commandToWrite, int x){
   while (result != 0x01 && (idle == 1 || counter < 11)) {  // Repeat until device is Ready 
     delay(1);
     result = transferByte(0xFF);
-    SerialUSB.print("Status of device. Result: "),SerialUSB.println(result);
+    //SerialUSB.print("Status of device. Result: "),SerialUSB.println(result);
     if (result == 0){
       idle = 0;
       counter ++;
     }
   }
-//  float l_diff = micros()- l_start;
-//  Serial.println(l_diff);
+
+
   if (idle == 1){
     // Get the 12 bytes of return data from the device: 
     for (int ii=0; ii<3; ii++) {
@@ -147,9 +203,7 @@ float getIMU(byte commandToWrite, int x){
         data[ii].b[jj] =  transferByte(0xFF);
       }
     }    
-   
-    SPI.endTransaction();
-  
+     
     //Swap bytes from big endian to little endian
     for( int mm=0; mm<3; mm++) {
       endianSwap(data[mm].b);
@@ -157,10 +211,13 @@ float getIMU(byte commandToWrite, int x){
     
     return data[x].fval;  //returns roll angle or roll rate
 
-  }else{
+  }
+  else{
     getIMU(commandToWrite, x);
   }
 }
+*/
+
 
 
 
