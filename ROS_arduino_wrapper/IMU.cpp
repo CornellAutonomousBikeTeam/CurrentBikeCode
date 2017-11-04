@@ -44,6 +44,8 @@ void initIMU(void){
   //Initialize SPI
   SPI.begin();
   SPI.beginTransaction(settings);
+  //Initialize serial
+  Serial1.begin(115200);
 }
 /*
   SPI.transfer(0x50); //set streaming slots
@@ -103,7 +105,8 @@ void initIMU(void){
 //}
 
 float getIMU(byte commandToWrite, int x){
-    SPI.beginTransaction(settings);
+
+    //SPI.beginTransaction(settings);
 //   float l_start = micros();
   /*Setup bytes to write*/
   // Clear the internal data buffer on the IMU
@@ -132,14 +135,14 @@ float getIMU(byte commandToWrite, int x){
   while (result != 0x01 && (idle == 1 || counter < 11)) {  // Repeat until device is Ready 
     delay(1);
     result = transferByte(0xFF);
-    SerialUSB.print("Status of device. Result: "),SerialUSB.println(result);
+    //SerialUSB.print("Status of device. Result: "),SerialUSB.println(result);
     if (result == 0){
       idle = 0;
       counter ++;
     }
   }
-//  float l_diff = micros()- l_start;
-//  Serial.println(l_diff);
+
+
   if (idle == 1){
     // Get the 12 bytes of return data from the device: 
     for (int ii=0; ii<3; ii++) {
@@ -147,9 +150,7 @@ float getIMU(byte commandToWrite, int x){
         data[ii].b[jj] =  transferByte(0xFF);
       }
     }    
-   
-    SPI.endTransaction();
-  
+     
     //Swap bytes from big endian to little endian
     for( int mm=0; mm<3; mm++) {
       endianSwap(data[mm].b);
@@ -157,7 +158,8 @@ float getIMU(byte commandToWrite, int x){
     
     return data[x].fval;  //returns roll angle or roll rate
 
-  }else{
+  }
+  else{
     getIMU(commandToWrite, x);
   }
 }
