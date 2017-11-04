@@ -459,12 +459,12 @@ void setup()
   oldIndex = y;
   digitalWrite(DIR, HIGH);
 
-  /*
+  
     while(y==oldIndex){
     analogWrite(PWM_front,20);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");
-    }*/
+    }
 
   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
   x_offset = REG_TC0_CV0;
@@ -617,20 +617,31 @@ void loop() {
   numTimeSteps++;
 
   //Rear motor controller with RC to switch between controller and RC inputs
-  if (pulse_time6 > 1700 && pulse_time6 < 2100) {
-    foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
-  }
-  else {
-    rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
-    if (rear_pwm > 180) {
-      rear_pwm = 180;
-    }
-    if (rear_pwm < 60) {
-      rear_pwm = 60;
-    }
-    foreward_speed = rear_pwm;
-  }
+  foreward_speed = map(pulse_time2, 1100, 1900, 0, 18);
 
+    /*Map foreward_speed range [0, 200] to radians per second [0 rad/s, 18 rad/s] and discretize it. Convert radians per second
+    to meters per second in the range [0 m/s, 3.3 m/s]. Map these values back to foreward_speed range [0, 200] */
+    if(foreward_speed > 0 && foreward_speed <= 2.7){
+      foreward_speed = velocityToPWM(2.7)*200/maxfront_PWM;     //0.495 m/s
+    }
+    if(foreward_speed > 2.7 && foreward_speed <= 5.4){
+      foreward_speed = velocityToPWM(5.4)*200/maxfront_PWM;     //0.999 m/s
+    }
+    if(foreward_speed > 5.4 && foreward_speed <= 8.1){
+      foreward_speed = velocityToPWM(8.1)*200/maxfront_PWM;     //1.498 m/s
+    }
+    if(foreward_speed > 8.1 && foreward_speed <= 10.8){
+      foreward_speed = velocityToPWM(10.8)*200/maxfront_PWM;    //1.998 m/s
+    }
+    if(foreward_speed > 10.8 && foreward_speed <= 13.5){
+      foreward_speed = velocityToPWM(13.5)*200/maxfront_PWM;    //2.497 m/s
+    }
+    if(foreward_speed > 13.5 && foreward_speed <= 16.2){
+      foreward_speed = velocityToPWM(16.2)*200/maxfront_PWM;    //2.997 m/s
+    }
+    if(foreward_speed > 16.2 && foreward_speed <= 18){
+      foreward_speed = velocityToPWM(18)*200/maxfront_PWM;      //3.3 m/s
+    } 
   analogWrite(PWM_rear, foreward_speed);
 
   // Note that we don't need to use the RC controller data here because

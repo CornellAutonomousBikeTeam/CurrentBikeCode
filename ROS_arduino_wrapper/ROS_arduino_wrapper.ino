@@ -678,19 +678,29 @@ void loop() {
   numTimeSteps++;
 
   //Rear motor controller with RC to switch between controller and RC inputs
-  if (pulse_time6 > 1700 && pulse_time6 < 2100) {
-    foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
-  }
-  else {
-    rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
-    if (rear_pwm > 180) {
-      rear_pwm = 180;
+    foreward_speed = map(pulse_time2, 1100, 1900, 0, 18);
+  
+      if(foreward_speed > 0 && foreward_speed <= 2.7){
+      foreward_speed = velocityToPWM(2.7)*200/maxfront_PWM;     //0.495 m/s
     }
-    if (rear_pwm < 60) {
-      rear_pwm = 60;
+    if(foreward_speed > 2.7 && foreward_speed <= 5.4){
+      foreward_speed = velocityToPWM(5.4)*200/maxfront_PWM;     //0.999 m/s
     }
-    foreward_speed = rear_pwm;
-  }
+    if(foreward_speed > 5.4 && foreward_speed <= 8.1){
+      foreward_speed = velocityToPWM(8.1)*200/maxfront_PWM;     //1.498 m/s
+    }
+    if(foreward_speed > 8.1 && foreward_speed <= 10.8){
+      foreward_speed = velocityToPWM(10.8)*200/maxfront_PWM;    //1.998 m/s
+    }
+    if(foreward_speed > 10.8 && foreward_speed <= 13.5){
+      foreward_speed = velocityToPWM(13.5)*200/maxfront_PWM;    //2.497 m/s
+    }
+    if(foreward_speed > 13.5 && foreward_speed <= 16.2){
+      foreward_speed = velocityToPWM(16.2)*200/maxfront_PWM;    //2.997 m/s
+    }
+    if(foreward_speed > 16.2 && foreward_speed <= 18){
+      foreward_speed = velocityToPWM(18)*200/maxfront_PWM;      //3.3 m/s
+    } 
 
   analogWrite(PWM_rear, foreward_speed);
 
@@ -703,7 +713,7 @@ void loop() {
   // desired_steer = steer_range * .01 ;
 
   //Nav controls front wheel
-  //desired_steer = nav_instr;
+  desired_steer = nav_instr;
 
   l_start = micros();
   float encoder_position = updateEncoderPosition(); //output is current position wrt front zero
