@@ -78,7 +78,7 @@ long l_start;
 long l_diff;
 
 //Balance Control constants
-const int k1 = 71; //phi = lean
+const int k1 = 70; //phi = lean
 const int k2 = 10; //was previously 21 //phidot=lean rate
 const int k3 = -20; //delta=steer
 
@@ -607,7 +607,7 @@ float balanceController(float roll_angle, float roll_rate, float encoder_angle) 
 
 
 //OLD Retrieve data from IMU about roll angle and rate and return it
-/*
+
 struct roll_t updateIMUData() {
   roll_t roll_data;
 
@@ -615,12 +615,12 @@ struct roll_t updateIMUData() {
   float roll_angle = getIMU(0x01, 2);   //get roll angle
   float roll_rate = getIMU(0x26, 2);    //get roll rate
   float yaw = getIMU(0x01, 1); //get yaw
-  roll_data.angle = roll_angle;
-  roll_data.rate = roll_rate;
+  roll_data.roll_angle = roll_angle;
+  roll_data.roll_rate = roll_rate;
   roll_data.yaw = yaw;
   return roll_data;
 }
-*/
+
 //NEW
 void readBuffer(float dataArray[]) {
   int i = 0;
@@ -678,29 +678,19 @@ void loop() {
   numTimeSteps++;
 
   //Rear motor controller with RC to switch between controller and RC inputs
-    foreward_speed = map(pulse_time2, 1100, 1900, 0, 18);
-  
-      if(foreward_speed > 0 && foreward_speed <= 2.7){
-      foreward_speed = velocityToPWM(2.7)*200/maxfront_PWM;     //0.495 m/s
+  if (pulse_time6 > 1700 && pulse_time6 < 2100) {
+    foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
+  }
+  else {
+    rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
+    if (rear_pwm > 180) {
+      rear_pwm = 180;
     }
-    if(foreward_speed > 2.7 && foreward_speed <= 5.4){
-      foreward_speed = velocityToPWM(5.4)*200/maxfront_PWM;     //0.999 m/s
+    if (rear_pwm < 60) {
+      rear_pwm = 60;
     }
-    if(foreward_speed > 5.4 && foreward_speed <= 8.1){
-      foreward_speed = velocityToPWM(8.1)*200/maxfront_PWM;     //1.498 m/s
-    }
-    if(foreward_speed > 8.1 && foreward_speed <= 10.8){
-      foreward_speed = velocityToPWM(10.8)*200/maxfront_PWM;    //1.998 m/s
-    }
-    if(foreward_speed > 10.8 && foreward_speed <= 13.5){
-      foreward_speed = velocityToPWM(13.5)*200/maxfront_PWM;    //2.497 m/s
-    }
-    if(foreward_speed > 13.5 && foreward_speed <= 16.2){
-      foreward_speed = velocityToPWM(16.2)*200/maxfront_PWM;    //2.997 m/s
-    }
-    if(foreward_speed > 16.2 && foreward_speed <= 18){
-      foreward_speed = velocityToPWM(18)*200/maxfront_PWM;      //3.3 m/s
-    } 
+    foreward_speed = rear_pwm;
+  }
 
   analogWrite(PWM_rear, foreward_speed);
 
@@ -718,8 +708,8 @@ void loop() {
   l_start = micros();
   float encoder_position = updateEncoderPosition(); //output is current position wrt front zero
   //Serial.println("Got encoder position");
-  //roll_t imu_data = updateIMUData();
-  updateIMUDataSerial();
+  roll_t imu_data = updateIMUData();
+  //updateIMUDataSerial();
   //Serial.println("Got IMU data");
   float desiredVelocity = balanceController(((1) * (imu_data.roll_angle)), (1) * imu_data.roll_rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
   //Serial.println("Got desired velocity");
@@ -734,8 +724,8 @@ void loop() {
   bike_state.data[1] = desiredVelocity; //front motor (rad/s)
   bike_state.data[2] = encoder_position; //front motor (rad) (delta)
   bike_state.data[3] = desired_steer; //front motor (rad)
-  bike_state.data[4] = imu_data.roll_angle; //imu (rad) (phi-dot)
-  bike_state.data[5] = imu_data.roll_rate; //imu (rad/s) (phi)
+  bike_state.data[4] = imu_data.roll_rate; //imu (rad) (phi-dot)
+  bike_state.data[5] = imu_data.roll_angle; //imu (rad/s) (phi)
   bike_state.data[6] = speed; //rear motor (m/s) (based on hall sensor)
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
