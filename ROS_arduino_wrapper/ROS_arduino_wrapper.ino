@@ -6,6 +6,7 @@ int prev_millis = 0;
 int curr_millis = 0;
 int total_millis = 0;
 int bits_so_far = 0;
+int wheel = 0; // used to see whether the wheel should be up or down 0 means the wheel should be down
 //ros::NodeHandle  nh;
 ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500 
 
@@ -463,7 +464,7 @@ void setup()
     while(y==oldIndex){
     analogWrite(PWM_front,50);
     y = REG_TC0_CV1;
-    //Serial.println("Ticking");
+    Serial.println("Ticking");
     }
 
   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
@@ -614,6 +615,8 @@ struct roll_t updateIMUData() {
 //Loop variables
 int blinkState = HIGH;
 void loop() {
+  
+Serial.println(pulse_time6);
   numTimeSteps++;
 
   //Rear motor controller with RC to switch between controller and RC inputs
@@ -621,6 +624,23 @@ void loop() {
     foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
     Serial.println(pulse_time2);
     Serial.print(pulse_time);
+
+    if (pulse_time6 > 1300) {
+      wheel = 1; // up state 1 CH6 or 0;
+    }
+//
+    if (pulse_time6 < 1300) {
+      wheel = 0; //down state 2 FLAPS;
+    }
+//
+      if (wheel == 1) {
+        landingGearDown();
+      }
+//
+        if (wheel == 0) {
+        landingGearUp();
+      }
+
   /*}
   //else {
    // rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
@@ -758,6 +778,7 @@ void loop() {
   */
 
 }
+
 
 
 
