@@ -1,5 +1,10 @@
 #include "FrontWheel.h"
 #include <math.h>
+#include "Encoder.h" //In order to use relativePos and indexValue
+
+
+// Array containing pid controller debug variables
+std_msgs::Float32MultiArray pid_controller_data;
 
 
 /*

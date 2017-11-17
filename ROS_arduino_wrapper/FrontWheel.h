@@ -1,9 +1,12 @@
 #ifndef FrontWheel_h
 #define FrontWheel_h
 
-#include <Encoder.h> //In order to use relativePos and indexValue
 #include <SPI.h>
 #include <math.h>
+
+#include <ros.h>
+#include <std_msgs/Float32.h>
+#include <std_msgs/Float32MultiArray.h>
 
 /*Define definite variables*/
 
