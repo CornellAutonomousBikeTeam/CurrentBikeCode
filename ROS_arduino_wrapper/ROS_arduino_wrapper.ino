@@ -42,7 +42,8 @@ float temp = 0;
 TinyGPSPlus gps;
 
 #include "IMU.h"
-#include "PID.h"
+#include "BalanceController.h"
+#include "FrontWheel.h"
 #include "RearMotor.h"
 #include <math.h>
 
@@ -73,14 +74,8 @@ float gain_p = 5;
 float desired_speed = 3; //(m/s)
 
 //Timed Loop Variables
-const long interval = 10000;
 long l_start;
 long l_diff;
-
-//Balance Control constants
-const int k1 = 71; //phi = lean
-const int k2 = 10; //was previously 21 //phidot=lean rate
-const int k3 = -20; //delta=steer
 
 //Encoder
 const int quad_A = 2;
@@ -179,11 +174,6 @@ float VELOCITY_VOLTAGE_C = -1.2002;
 
 //define maximum front wheel pwm
 int maxfront_PWM = 110;
-
-//Read the relative position of the encoder
-signed int relativePos = REG_TC0_CV0;
-//Read the index value (Z channel) of the encoder
-signed int indexValue = REG_TC0_CV1;
 
 
 //set up timer for rc communication for steer and back motor speed
@@ -531,16 +521,6 @@ int velocityToPWM (float desiredVelocity) {
 }
 
 
-/*
- * Takes in commanded velocity from balance controller, and converts
- * commanded velocity into commanded position
- */
-float eulerIntegrate(float desiredVelocity, float current_pos) {
-  float desiredPosition = current_pos + desiredVelocity * ((float)interval / 1000000.0) ;
-  return desiredPosition;
-}
-
-
 // updates global variables representing encoder position
 float updateEncoderPosition() {
   //Read the relative position of the encoder
@@ -551,63 +531,9 @@ float updateEncoderPosition() {
   return current_pos;
 }
 
-/*
- * Takes in desired position and applies a PID controller to minimize
- * error between current position and desired position. This function
- * also calls PID_Controller (from PID.cpp), which sends the actual PWM
- * signal to the front wheel.
- */
-float frontWheelControl(float desiredVelocity, float current_pos) {
-
-  // steer_contribution is a global variable, so we don't need to make
-  // it a parameter of this function
-
-  unsigned long current_t = micros();
-
-  //  if (n == 0) {
-  //    float desired_pos = 0;
-  //    PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition);
-  //    n++;
-  //  }
-  float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
-  //Serial.println(String(theo_position) + '\t' + String(desired_pos) + '\t' + String(current_pos)) ;
-
-  /*
-    if (Serial.available()){
-    desired_pos = M_PI / 180 * Serial.parseFloat();
-    }
-  */
-
-  //Serial.println(String(steer_contribution) + '\t' +  String(commanded_speed));
-
-  // The PID_Controller function will actually rotate the front motor!
-  float pid_controller_data_array[5];
-  float current_vel = PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition, pid_controller_data_array);
-
-  // Copy data from the PID controller into the outgoing ROS topic structure
-  for(int i = 0; i < 6; i++) {
-    pid_controller_data.data[i] = pid_controller_data_array[i];
-  }
-
-  previous_t = current_t;
-  oldPosition = relativePos - x_offset;
-}
-
-/* Function that returns desired angular velocity of front wheel */
-float balanceController(float roll_angle, float roll_rate, float encoder_angle) {
-  float desiredSteerRate = (k1 * roll_angle) + (k2 * roll_rate) + k3 * (encoder_angle - desired_steer);
-  if (desiredSteerRate > 10) {
-    desiredSteerRate = 10;
-  }
-  else if (desiredSteerRate < -10) {
-    desiredSteerRate = -10;
-  }
-  return desiredSteerRate;
-}
-
 
 //OLD Retrieve data from IMU about roll angle and rate and return it
-/*
+
 struct roll_t updateIMUData() {
   roll_t roll_data;
 
@@ -615,12 +541,70 @@ struct roll_t updateIMUData() {
   float roll_angle = getIMU(0x01, 2);   //get roll angle
   float roll_rate = getIMU(0x26, 2);    //get roll rate
   float yaw = getIMU(0x01, 1); //get yaw
-  roll_data.angle = roll_angle;
-  roll_data.rate = roll_rate;
+  //Serial.println("Old Serial Protocol");
+  roll_data.roll_angle = roll_angle;
+  //Serial.print("Roll angle: ");
+  //Serial.println(roll_data.roll_angle, 10);
+  roll_data.roll_rate = roll_rate;
+  //Serial.print("Roll rate: ");
+  //Serial.println(roll_data.roll_rate, 10);
   roll_data.yaw = yaw;
+  //Serial.print("Yaw: ");
+  //Serial.println(roll_data.yaw, 10);
   return roll_data;
 }
-*/
+
+//NEW
+void readBuffer(float dataArray[]) {
+  int i = 0;
+  String data;
+  while(Serial1.available()) {
+    if(Serial1.peek() == '\n') { //at end of response packet
+      Serial1.read();
+      if (i == 2) {
+        dataArray[i] = data.toFloat(); //if last value in data, since no comma at end
+      }
+    }
+    else {
+      char ch = Serial1.read();
+      //Serial.print(ch);
+      if (ch == ',') { //delimiter between values
+        dataArray[i] = data.toFloat();
+        data = "";
+        i++;
+      }
+      else data += ch;
+    }
+  }
+}
+
+void updateIMUDataSerial() {
+  Serial1.write(":1\n"); //send command to get euler angles for orientation
+  //Serial.println("Sent command for euler angles");
+  readBuffer(euler_angles); //parse the 3 euler angles and put them into an array
+  imu_data.roll_angle = euler_angles[2];
+  /*
+  From our tests 5 ms is the minimum delay we need to give the IMU a chance to
+  respond. At 4 ms or less we will get errors like "Lost sync with device"
+  and "Serial Port read returned short ..."
+  */
+  delay(5);
+  
+  Serial1.write(":38\n"); //send command to get gyro rate
+  //Serial.println("Sent command for gyro");
+  readBuffer(gyro_rate); //parse the 3 gyro rates and put them into an array
+  
+  
+  imu_data.yaw = gyro_rate[1];
+  imu_data.roll_rate = gyro_rate[2];
+  /*Serial.println("New Serial Protocol");
+  Serial.print("Roll angle: ");
+  Serial.println(imu_data.roll_angle, 10);
+  Serial.print("Roll rate: ");
+  Serial.println(imu_data.roll_rate, 10);
+  Serial.print("Yaw: ");
+  Serial.println(imu_data.yaw, 10);*/
+}
 
 
 //Loop variables
@@ -629,9 +613,9 @@ void loop() {
   numTimeSteps++;
 
   //Rear motor controller with RC to switch between controller and RC inputs
-  if (pulse_time6 > 1700 && pulse_time6 < 2100) {
-    foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
-  }
+  //Pulse time 2 gets scaled to forward_speed
+  foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
+  /*
   else {
     rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
     if (rear_pwm > 180) {
@@ -641,7 +625,7 @@ void loop() {
       rear_pwm = 60;
     }
     foreward_speed = rear_pwm;
-  }
+  }*/
 
   analogWrite(PWM_rear, foreward_speed);
 
@@ -654,29 +638,30 @@ void loop() {
   // desired_steer = steer_range * .01 ;
 
   //Nav controls front wheel
-  //desired_steer = nav_instr;
+  desired_steer = nav_instr;
 
   l_start = micros();
   float encoder_position = updateEncoderPosition(); //output is current position wrt front zero
   //Serial.println("Got encoder position");
-  //roll_t imu_data = updateIMUData();
+  roll_t imu_data = updateIMUData();
   updateIMUDataSerial();
   //Serial.println("Got IMU data");
-  float desiredVelocity = balanceController(((1) * (imu_data.roll_angle)), (1) * imu_data.roll_rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
+  float desiredVelocity = balanceController(((1) * (imu_data.roll_angle)), (1) * imu_data.roll_rate, encoder_position, desired_steer); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
   //Serial.println("Got desired velocity");
   // frontWheelControl also calls a function that sends the PWM signal to the front motor
   // frontWheelControl will update the pid_controller_data.data array with new info
   float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
   //Serial.println("Got current velocity");
-
+  //Serial.print("current_vel: ");
+  Serial.println(current_vel);
   // Do not change bike_state indexes - some of them are hard-coded into
   // the nav algorithm
   bike_state.data[0] = current_vel; //front motor (rad/s)
   bike_state.data[1] = desiredVelocity; //front motor (rad/s)
   bike_state.data[2] = encoder_position; //front motor (rad) (delta)
   bike_state.data[3] = desired_steer; //front motor (rad)
-  bike_state.data[4] = imu_data.roll_angle; //imu (rad) (phi-dot)
-  bike_state.data[5] = imu_data.roll_rate; //imu (rad/s) (phi)
+  bike_state.data[4] = imu_data.roll_rate; //imu (rad) (phi-dot)
+  bike_state.data[5] = imu_data.roll_angle; //imu (rad/s) (phi)
   bike_state.data[6] = speed; //rear motor (m/s) (based on hall sensor)
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
@@ -774,5 +759,3 @@ void loop() {
 
 
 //}
-
-
