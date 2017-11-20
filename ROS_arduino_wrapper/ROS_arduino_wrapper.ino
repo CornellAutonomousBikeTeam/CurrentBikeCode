@@ -43,7 +43,9 @@ TinyGPSPlus gps;
 
 #include "IMU.h"
 #include "PID.h"
+#include "RC.h"
 #include "RearMotor.h"
+#include "Encoder.h"
 #include <math.h>
 
 
@@ -81,30 +83,6 @@ long l_diff;
 const int k1 = 70; //phi = lean
 const int k2 = 10; //was previously 21 //phidot=lean rate
 const int k3 = -20; //delta=steer
-
-//Encoder
-const int quad_A = 2;
-const int quad_B = 13;
-const int idx = 60;
-const unsigned int mask_quad_A = digitalPinToBitMask(quad_A);
-const unsigned int mask_quad_B = digitalPinToBitMask(quad_B);
-const unsigned int mask_idx = digitalPinToBitMask(idx);
-int REnot = 3;
-int DE = 4;
-signed int oldPosition  = 0;
-signed int oldIndex = 0;
-unsigned long previous_t = 0;
-signed int x_offset = 0;
-float desired_pos = 0;
-float current_pos = 0;
-float current_vel = 0;
-float desired_vel = 0;
-float vel_error = 0;
-float pos_error = 0;
-float PID_output = 0;
-float sp_error = 0;
-float sv_error = 0;
-int pwm = 0;
 
 //count the number of times the time step has been calculated to calculate a running average time step
 int numTimeSteps = 0;
@@ -150,13 +128,6 @@ float commanded_speed ;
 #define LED_2 35
 #define LED_3 36
 
-//RC
-#define RC_CH1 51     //Steer Angle 
-#define RC_CH2 28     //
-#define RC_CH3 25     //Velocity 
-#define RC_CH4 33     //
-#define RC_CH5 27     //Kill Switch 
-#define RC_CH6 32     //Landing Gear 
 
 //timers for each channel
 int duration_CH1, duration_CH2, duration_CH3, duration_CH4, duration_CH5, duration_CH6;
@@ -179,11 +150,6 @@ float VELOCITY_VOLTAGE_C = -1.2002;
 
 //define maximum front wheel pwm
 int maxfront_PWM = 110;
-
-//Read the relative position of the encoder
-signed int relativePos = REG_TC0_CV0;
-//Read the index value (Z channel) of the encoder
-signed int indexValue = REG_TC0_CV1;
 
 
 //set up timer for rc communication for steer and back motor speed
