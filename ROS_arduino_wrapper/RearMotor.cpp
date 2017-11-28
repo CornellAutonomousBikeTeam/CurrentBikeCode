@@ -1,4 +1,22 @@
 #include "RearMotor.h"
+
+/*Variables*/
+
+//Rear Motor Variables
+float rear_pwm = 0; //current pwm value
+double speed = 0; //speed in rev/s
+boolean forward = true; //if False, is running in reverse
+//Variables for calculating rear motor speed
+float tOld = 0; //first time reading
+float tNew = 0; //second time reading
+double T = 0;
+
+//Rear motor controller variable
+float gain_p = 5;
+float desired_speed = 3; //(m/s)
+
+
+
 /*
    Method for setting rear motor at a certain PWM
 
@@ -41,4 +59,11 @@ void switchDirection(boolean forward) {
   }
 }
 
-
+void getPeriod() {
+  float tOld = tNew;
+  tNew = micros();
+  double T = (tNew - tOld);
+  if ((1.2446) * (1E6) / (28 * T) < 100) {
+    speed = (1.2446) * (1E6) / (28 * T) ;
+  }
+}

@@ -2,11 +2,22 @@
 #include <ros.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
+#include "TinyGPS++.h"
+TinyGPSPlus gps;
+#include "IMU.h"
+#include "FrontWheel.h"
+#include "RC.h"
+#include "RearMotor.h"
+#include "Encoder.h"
+#include "LandingGear.h"
+#include <math.h>
+
 int count = 0; //used to determine if we are running at 5hz
 int prev_millis = 0;
 int curr_millis = 0;
 int total_millis = 0;
 int bits_so_far = 0;
+
 //ros::NodeHandle  nh;
 ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500 
 
@@ -15,9 +26,6 @@ std_msgs::Float32MultiArray bike_state;
 
 //Array containing gps state variables
 std_msgs::Float32MultiArray gps_state;
-
-// Array containing pid controller debug variables
-std_msgs::Float32MultiArray pid_controller_data;
 
 //Publisher object for the bike state
 ros::Publisher state_pub("bike_state", &bike_state);
@@ -38,83 +46,21 @@ ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction, queu
 
 float temp = 0;
 
-#include "TinyGPS++.h"
-TinyGPSPlus gps;
-
-#include "IMU.h"
-#include "PID.h"
-#include "RC.h"
-#include "RearMotor.h"
-#include "Encoder.h"
-#include <math.h>
-
-
-/*Define definite variables*/
-
-//Front Motor
-#define PWM_front 9
-#define DIR 46
-int steer_dir = 0;
-
-//Rear Motor
-#define PWM_rear 8  //rear motor PWM pin
-#define hall_pin 11 //hall sensor pulse 
-#define reverse_pin 50 //to change direction of rear motor
-
-//Rear Motor Variables
-float rear_pwm = 0; //current pwm value
-double speed = 0; //speed in rev/s
-boolean forward = true; //if False, is running in reverse
-//Variables for calculating rear motor speed
-float tOld = 0; //first time reading
-float tNew = 0; //second time reading
-double T = 0;
-
-//Rear motor controller variable
-float gain_p = 5;
-float desired_speed = 3; //(m/s)
+//current cycle's logic
+boolean CH1, CH2, CH3, CH4, CH5, CH6;
 
 //Timed Loop Variables
-const long interval = 10000;
 long l_start;
 long l_diff;
-
-//Balance Control constants
-const int k1 = 70; //phi = lean
-const int k2 = 10; //was previously 21 //phidot=lean rate
-const int k3 = -20; //delta=steer
 
 //count the number of times the time step has been calculated to calculate a running average time step
 int numTimeSteps = 0;
 float averageTimeStep = 0;
 int n = 0;
 
-float desired_steer = 0;
-float desired_pos_array[250];
-float theo_position = 0;
-
-//IMU
-// A struct to hold the IMU information
-struct roll_t {
-  float roll_angle;
-  float roll_rate;
-  float yaw; 
-};
-roll_t imu_data;
-float euler_angles[3]; //array that contains euler angles in pitch, yaw, roll order
-float gyro_rate[3]; //array that contains the corrected gyro rate in radians/sec
-
 //Watchdog
 #define WDI 42
 #define EN 41
-
-//Landing Gear
-#define relay1 48
-#define relay2 47
-float front_steer_value ;
-float back_wheel_speed ;
-float steer_contribution ;
-float commanded_speed ;
 
 //#define front_steer_value 51
 //#define back_wheel_speed 28
@@ -128,19 +74,6 @@ float commanded_speed ;
 #define LED_2 35
 #define LED_3 36
 
-
-//timers for each channel
-int duration_CH1, duration_CH2, duration_CH3, duration_CH4, duration_CH5, duration_CH6;
-int start_CH1, start_CH2, start_CH3, start_CH4, start_CH5, start_CH6;
-int end_CH1, end_CH2, end_CH3, end_CH4, end_CH5, end_CH6;
-//current cycle's logic
-boolean CH1, CH2, CH3, CH4, CH5, CH6;
-
-//RC variables
-float desired_angle;  //CH1
-int PWM_rear_output;  //CH3
-
-
 //voltage constants and variables
 const int VOLTAGE_PIN = 63; //A9
 float VOLTAGE_CONST = 14.2;
@@ -148,95 +81,6 @@ float battery_voltage = 0;
 float VELOCITY_VOLTAGE_K = 1.7936;
 float VELOCITY_VOLTAGE_C = -1.2002;
 
-//define maximum front wheel pwm
-int maxfront_PWM = 110;
-
-
-//set up timer for rc communication for steer and back motor speed
-volatile unsigned long timer_start;  //micros when the pin goes HIGH
-volatile unsigned long timer_start2;  //micros when the pin goes HIGH
-volatile unsigned long timer_start6;  //micros when the pin goes HIGH
-volatile int last_interrupt_time; //calcSignal is the interrupt handler
-volatile int last_interrupt_time2; //calcSignal is the interrupt handler
-volatile int last_interrupt_time6; //calcSignal is the interrupt handler
-volatile float steer_range ;
-volatile float foreward_speed ;
-volatile float pulse_time ;
-volatile float pulse_time2 ;
-volatile float pulse_time6 ;
-
-//difference between timer_start and micros() is the length of time that the pin
-//was HIGH - the PWM pulse length. volatile int pulse_time;
-//this is the time that the last interrupt occurred.
-//you can use this to determine if your receiver has a signal or not.
-
-void calcSignal()
-{
-  //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
-  last_interrupt_time = micros();
-  //if the pin has gone HIGH, record the microseconds since the Arduino started up
-  if (digitalRead(RC_CH1) == HIGH)
-  {
-    timer_start = micros();
-  }
-  //otherwise, the pin has gone LOW
-  else
-  {
-    //only worry about this if the timer has actually started
-    if (timer_start != 0 && ((volatile int)micros() - timer_start > 1100) && ((volatile int)micros() - timer_start < 1900) )
-    {
-      //record the pulse time
-      pulse_time = ((volatile int)micros() - timer_start); //pulse time is the output from the rc value that we need to transform into a pwm value
-      //restart the timer
-      timer_start = 0;
-    }
-  }
-}
-void calcSignal2()
-{
-  //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
-  last_interrupt_time2 = micros();
-  //if the pin has gone HIGH, record the microseconds since the Arduino started up
-  if (digitalRead(RC_CH2) == HIGH)
-  {
-    timer_start2 = micros();
-  }
-  //otherwise, the pin has gone LOW
-  else
-  {
-    //only worry about this if the timer has actually started
-    if (timer_start2 != 0 && ((volatile int)micros() - timer_start2 > 1100) && ((volatile int)micros() - timer_start2 < 1900) )
-    {
-      //record the pulse time
-      pulse_time2 = ((volatile int)micros() - timer_start2); //pulse time is the output from the rc value that we need to transform into a pwm value
-      //restart the timer
-      timer_start2 = 0;
-    }
-  }
-}
-
-void calcSignal6()
-{
-  //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
-  last_interrupt_time6 = micros();
-  //if the pin has gone HIGH, record the microseconds since the Arduino started up
-  if (digitalRead(RC_CH6) == HIGH)
-  {
-    timer_start6 = micros();
-  }
-  //otherwise, the pin has gone LOW
-  else
-  {
-    //only worry about this if the timer has actually started
-    if (timer_start6 != 0 && ((volatile int)micros() - timer_start6 > 1000) && ((volatile int)micros() - timer_start6 < 2000) )
-    {
-      //record the pulse time
-      pulse_time6 = ((volatile int)micros() - timer_start6); //pulse time is the output from the rc value that we need to transform into a pwm value
-      //restart the timer
-      timer_start6 = 0;
-    }
-  }
-}
 
 //  method for sending hex messages to the gps
 void sendUBX(byte *UBXmsg, byte msgLength) {
@@ -244,15 +88,7 @@ void sendUBX(byte *UBXmsg, byte msgLength) {
     Serial3.write(UBXmsg[i]);
   }
 }
-void getPeriod() {
-  float tOld = tNew;
-  tNew = micros();
-  double T = (tNew - tOld);
-  if ((1.2446) * (1E6) / (28 * T) < 100) {
-    speed = (1.2446) * (1E6) / (28 * T) ;
 
-  }
-}
 //this is all normal arduino stuff
 void setup()
 {
@@ -468,16 +304,6 @@ void setup()
 }
 
 
-//landing gear functions
-void landingGearDown() {
-  digitalWrite(48, LOW); //sets relay pin 1 to High (turns light on)
-  digitalWrite(47, LOW); //sets relay pin 2 to High  (turns light on)
-}
-void landingGearUp() {
-  digitalWrite(48, HIGH); //Sets relay pin 1 to low (turns light off)
-  digitalWrite(47, HIGH); //Sets relay pin 2 to low (turns light off)
-}
-
 /* takes in desired angular velocity, returns pwm. Currently unused. */
 int velocityToPWM (float desiredVelocity) {
   battery_voltage = analogRead(VOLTAGE_PIN);
@@ -495,148 +321,6 @@ int velocityToPWM (float desiredVelocity) {
     return pwm;
   }
 }
-
-
-/*
- * Takes in commanded velocity from balance controller, and converts
- * commanded velocity into commanded position
- */
-float eulerIntegrate(float desiredVelocity, float current_pos) {
-  float desiredPosition = current_pos + desiredVelocity * ((float)interval / 1000000.0) ;
-  return desiredPosition;
-}
-
-
-// updates global variables representing encoder position
-float updateEncoderPosition() {
-  //Read the relative position of the encoder
-  relativePos = REG_TC0_CV0;
-  //Read the index value (Z channel) of the encoder
-  indexValue = REG_TC0_CV1;
-  current_pos = (((relativePos - x_offset) * 0.02197 * M_PI) / 180); //Angle (rad)
-  return current_pos;
-}
-
-/*
- * Takes in desired position and applies a PID controller to minimize
- * error between current position and desired position. This function
- * also calls PID_Controller (from PID.cpp), which sends the actual PWM
- * signal to the front wheel.
- */
-float frontWheelControl(float desiredVelocity, float current_pos) {
-
-  // steer_contribution is a global variable, so we don't need to make
-  // it a parameter of this function
-
-  unsigned long current_t = micros();
-
-  //  if (n == 0) {
-  //    float desired_pos = 0;
-  //    PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition);
-  //    n++;
-  //  }
-  float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
-  //Serial.println(String(theo_position) + '\t' + String(desired_pos) + '\t' + String(current_pos)) ;
-
-  /*
-    if (Serial.available()){
-    desired_pos = M_PI / 180 * Serial.parseFloat();
-    }
-  */
-
-  //Serial.println(String(steer_contribution) + '\t' +  String(commanded_speed));
-
-  // The PID_Controller function will actually rotate the front motor!
-  float pid_controller_data_array[5];
-  float current_vel = PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition, pid_controller_data_array);
-
-  // Copy data from the PID controller into the outgoing ROS topic structure
-  for(int i = 0; i < 6; i++) {
-    pid_controller_data.data[i] = pid_controller_data_array[i];
-  }
-
-  previous_t = current_t;
-  oldPosition = relativePos - x_offset;
-}
-
-/* Function that returns desired angular velocity of front wheel */
-float balanceController(float roll_angle, float roll_rate, float encoder_angle) {
-  float desiredSteerRate = (k1 * roll_angle) + (k2 * roll_rate) + k3 * (encoder_angle - desired_steer);
-  if (desiredSteerRate > 10) {
-    desiredSteerRate = 10;
-  }
-  else if (desiredSteerRate < -10) {
-    desiredSteerRate = -10;
-  }
-  return desiredSteerRate;
-}
-
-
-//OLD Retrieve data from IMU about roll angle and rate and return it
-
-struct roll_t updateIMUData() {
-  roll_t roll_data;
-
-  //get data from IMU
-  float roll_angle = getIMU(0x01, 2);   //get roll angle
-  float roll_rate = getIMU(0x26, 2);    //get roll rate
-  float yaw = getIMU(0x01, 1); //get yaw
-  roll_data.roll_angle = roll_angle;
-  roll_data.roll_rate = roll_rate;
-  roll_data.yaw = yaw;
-  return roll_data;
-}
-
-//NEW
-void readBuffer(float dataArray[]) {
-  int i = 0;
-  String data;
-  while(Serial1.available()) {
-    if(Serial1.peek() == '\n') { //at end of response packet
-      Serial1.read();
-      if (i == 2) {
-        dataArray[i] = data.toFloat(); //if last value in data, since no comma at end
-      }
-    }
-    else {
-      char ch = Serial1.read();
-      if (ch == ',') { //delimiter between values
-        dataArray[i] = data.toFloat();
-        data = "";
-        i++;
-      }
-      else data += ch;
-    }
-  }
-}
-
-void updateIMUDataSerial() {
-  Serial1.write(":1\n"); //send command to get euler angles for orientation
-  //Serial.println("Sent command for euler angles");
-  readBuffer(euler_angles); //parse the 3 euler angles and put them into an array
-
-  /*
-  From our tests 5 ms is the minimum delay we need to give the IMU a chance to
-  respond. At 4 ms or less we will get errors like "Lost sync with device"
-  and "Serial Port read returned short ..."
-  */
-  delay(5);
-  
-  //Serial.println("Sent command for gyro");
-  Serial1.write(":38\n"); //send command to get gyro rate
-  readBuffer(gyro_rate); //parse the 3 gyro rates and put them into an array
-  
-  imu_data.roll_angle = euler_angles[2];
-  imu_data.yaw = euler_angles[1];
-  imu_data.roll_rate = gyro_rate[2];
-  //Serial.print("Roll angle: ");
-  //Serial.println(imu_data.roll_angle, 10);
-  //Serial.print("Roll rate: ");
-  //Serial.println(gyro_rate[2], 10);
-  //Serial.print("Yaw: ");
-  //Serial.println(imu_data.yaw, 10);
-}
-
 
 //Loop variables
 int blinkState = HIGH;

@@ -1,5 +1,5 @@
 #include "Encoder.h"
-
+/*Variables*/
 //Read the relative position of the encoder
 signed int relativePos = REG_TC0_CV0;
 //Read the index value (Z channel) of the encoder
@@ -26,4 +26,15 @@ float PID_output = 0;
 float sp_error = 0;
 float sv_error = 0;
 int pwm = 0;
+
+/*Functions*/
+// updates global variables representing encoder position
+float updateEncoderPosition() {
+  //Read the relative position of the encoder
+  relativePos = REG_TC0_CV0;
+  //Read the index value (Z channel) of the encoder
+  indexValue = REG_TC0_CV1;
+  current_pos = (((relativePos - x_offset) * 0.02197 * M_PI) / 180); //Angle (rad)
+  return current_pos;
+}
 

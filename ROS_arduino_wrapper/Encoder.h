@@ -2,7 +2,7 @@
 #define Encoder_h
 #include <Arduino.h>
 
-
+/*Variables*/
 //Read the relative position of the encoder
 extern signed int relativePos;
 //Read the index value (Z channel) of the encoder
@@ -31,7 +31,8 @@ extern float sv_error;
 extern int pwm;
 
 
-
+/*Functions*/
+float updateEncoderPosition();
 
 #endif //Encoder_h
 
