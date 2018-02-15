@@ -1,5 +1,11 @@
 #include "IMU.h"
 
+
+/*Variables*/
+roll_t imu_data;
+float euler_angles[3]; //array that contains euler angles in pitch, yaw, roll order
+float gyro_rate[3]; //array that contains the corrected gyro rate in radians/sec
+
 /*IMU Setup and Functions*/
 /////////////////////////////////////////////////////////////////////////////////////
 SPISettings settings(6000000, MSBFIRST, SPI_MODE0 ); //variable to hold SPI settings this is only 6 times per second
@@ -164,7 +170,69 @@ float getIMU(byte commandToWrite, int x){
   }
 }
 
+//OLD Retrieve data from IMU about roll angle and rate and return it
 
+struct roll_t updateIMUData() {
+  roll_t roll_data;
 
+  //get data from IMU
+  float roll_angle = getIMU(0x01, 2);   //get roll angle
+  float roll_rate = getIMU(0x26, 2);    //get roll rate
+  float yaw = getIMU(0x01, 1); //get yaw
+  roll_data.roll_angle = roll_angle;
+  roll_data.roll_rate = roll_rate;
+  roll_data.yaw = yaw;
+  return roll_data;
+}
+
+//NEW
+void readBuffer(float dataArray[]) {
+  int i = 0;
+  String data;
+  while(Serial1.available()) {
+    if(Serial1.peek() == '\n') { //at end of response packet
+      Serial1.read();
+      if (i == 2) {
+        dataArray[i] = data.toFloat(); //if last value in data, since no comma at end
+      }
+    }
+    else {
+      char ch = Serial1.read();
+      if (ch == ',') { //delimiter between values
+        dataArray[i] = data.toFloat();
+        data = "";
+        i++;
+      }
+      else data += ch;
+    }
+  }
+}
+
+void updateIMUDataSerial() {
+  Serial1.write(":1\n"); //send command to get euler angles for orientation
+  //Serial.println("Sent command for euler angles");
+  readBuffer(euler_angles); //parse the 3 euler angles and put them into an array
+
+  /*
+  From our tests 5 ms is the minimum delay we need to give the IMU a chance to
+  respond. At 4 ms or less we will get errors like "Lost sync with device"
+  and "Serial Port read returned short ..."
+  */
+  delay(5);
+  
+  //Serial.println("Sent command for gyro");
+  Serial1.write(":38\n"); //send command to get gyro rate
+  readBuffer(gyro_rate); //parse the 3 gyro rates and put them into an array
+  
+  imu_data.roll_angle = euler_angles[2];
+  imu_data.yaw = euler_angles[1];
+  imu_data.roll_rate = gyro_rate[2];
+  //Serial.print("Roll angle: ");
+  //Serial.println(imu_data.roll_angle, 10);
+  //Serial.print("Roll rate: ");
+  //Serial.println(gyro_rate[2], 10);
+  //Serial.print("Yaw: ");
+  //Serial.println(imu_data.yaw, 10);
+}
 
 
