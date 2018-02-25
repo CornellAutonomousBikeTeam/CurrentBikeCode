@@ -1,4 +1,3 @@
-
 #include <ros.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
@@ -148,33 +147,15 @@ void setup()
   SerialUSB.begin(115200);
   Serial.begin(115200); //Set to the same rate as ROS for correct Serial connections
   //GPS
-  // GPS baudrate (gps hardware runs natively at 9600)
+  // GPS baudrate (gps hardware runs natively at 9600)  
   Serial3.begin(9600); //This was originally 9600 - test with higher baud rates
-
-  //hex messages that config gps data rate - found hex encodings via u-center
   byte gpsmsg10[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12}; //10hz
-  byte gpsmsg8[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x7D, 0x00, 0x01, 0x00, 0x01, 0x00, 0x93, 0xA8}; //8hz
-  byte gpsmsg5[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0xC8, 0x00, 0x01, 0x00, 0x01, 0x00, 0xDE, 0x6A}; //5hz
-  byte gpsmsg4[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0xFA, 0x00, 0x01, 0x00, 0x01, 0x00, 0x10, 0x96}; //3.3hz
-  byte gpsmsg33[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x2C, 0x01, 0x01, 0x00, 0x01, 0x00, 0x43, 0xC7}; //3.3hz
-  byte gpsmsg1[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0E8, 0x03, 0x01, 0x00, 0x01, 0x00, 0x01, 0x39}; //1hz
-
-  byte gpsmsgpoll[] = {0xB5, 0x62, 0x06, 0x00};
-  byte gpsmsgbaud[] = {0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x4B, 0x00, 0x00, 0x07, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xDF }; 
-  byte gpsmsgbaud2[] = {0xB5, 0x62, 0x06, 0x41, 0x09, 0x00, 0x01, 0x01, 0x30, 0x81, 0x00, 0x00, 0x00, 0x00, 0xFB, 0xFE, 0x1F};
-  byte gpsConvertToDefault[] = {0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x03, 0x1B, 0x9A};
-  byte gpsmsgSaveConf[] = {0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x1D, 0xAB};
-  byte gpsmsgbaud57600[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0xD0,0x08,0x00,0x00,0x00,0xE1,0x00,0x00,0x03,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0xDA,0xA9}; //UBX and NMEA
-  byte gpsmsgbaud19200[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0xD0,0x08,0x00,0x00,0x00,0x4B,0x00,0x00,0x07,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x48,0x57};
-  //Configures gps to 5hz update rate; change gpsmsg5 to a different byte encoding for different configurations
-  //sendUBX(gpsmsgpoll, sizeof(gpsmsgpoll));
-  //sendUBX(gpsConvertToDefault, sizeof(gpsConvertToDefault));
+  byte gpsmsgbaud57600[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0xE1,0x00,0x00,0x07,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x16,0x51}; //UBX and NMEA
   sendUBX(gpsmsg10, sizeof(gpsmsg10));
   sendUBX(gpsmsgbaud57600, sizeof(gpsmsgbaud57600));
-  sendUBX(gpsmsgSaveConf, sizeof(gpsmsgSaveConf));
   Serial3.end();
   Serial3.begin(57600);
-  Serial1.begin(115200);
+  
   initIMU();
   //setup rc
   //  pinMode(front_steer_value, INPUT);
@@ -278,7 +259,7 @@ void setup()
     while(y==oldIndex){
     analogWrite(PWM_front,50);
     y = REG_TC0_CV1;
-    Serial.println("Ticking");
+    //Serial.println("Ticking");
     }
 
   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
@@ -386,36 +367,14 @@ void loop() {
   while (Serial3.available()) {
     //Serial.print((char)Serial3.read());
     gps.encode(Serial3.read());
-    bits_so_far = bits_so_far + 8;
     Serial3.flush(); //WITHOUT THIS THE BUFFER WILL NOT BE ABLE TO BE READ AS FAST AS IT IS WRITTEN TO AND THIS WILL LOOP FOREVER
     //Serial.println(gps.location.isUpdated());
   }
+  Serial.print("Lat: ");Serial.println(gps.location.lat());
+  Serial.print("Long: ");Serial.println(gps.location.lng());
+  Serial.print("Age: "); Serial.println(gps.time.second()); 
 
-  /*if (gps.time.isUpdated()) {
-    prev_millis = curr_millis;
-    curr_millis = millis();*/
-    /*if (curr_millis - prev_millis > 70) {
-      Serial.print("AGE: "); Serial.println(curr_millis - prev_millis);
-      Serial.print("Latitude                      "); Serial.println(gps.location.lat(), 6);
-      Serial.print("Longitude                     "); Serial.println(gps.location.lng(), 6);
-      Serial.print("Age                     ");       Serial.println(gps.location.age(), 6);
-      Serial.print("Hours                         "); Serial.println(gps.time.hour()); // Hour (0-23)
-      Serial.print("Minutes                       "); Serial.println(gps.time.minute()); // Minute (0-59)
-      Serial.print("Seconds                       "); Serial.println(gps.time.second()); // Second (0-59)
-      Serial.print("Centiseconds                  "); Serial.println(gps.time.centisecond()); // 100ths of a second (0-99)
-      Serial.print("Date                          "); Serial.println(gps.date.value()); // Raw date in DDMMYY format
-      Serial.print("Number of Satelites in use    "); Serial.println(gps.satellites.value()); // Number of satellites in use
-      Serial.print("Course in degrees             "); Serial.println(gps.course.deg());
-      Serial.print("Bits so far             "); Serial.println(bits_so_far);
-
-    }*/
-    //}
-    //Serial.print("Valid remaining data: "); Serial.println(gps.charsProcessed());
-    //Serial.print("Sentences that failed checksum="); Serial.println(gps.failedChecksum());
-    // Testing overflow in SoftwareSerial is sometimes useful too.
-    //Serial.print("Soft Serial device overflowed? "); Serial.println(Serial3.overflow() ? "YES!" : "No");
-    //Serial.print("Serial3 read in"); Serial.println(Serial.read());
- // }
+  
   gps_state.data[0] = gps.location.lat(); //latitude (deg)
   gps_state.data[1] = gps.location.lng(); //longitude (deg)
   gps_state.data[2] = gps.time.hour(); // Hour (0-23)
