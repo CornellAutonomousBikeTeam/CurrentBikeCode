@@ -151,10 +151,10 @@ void setup()
   Serial3.begin(9600); //This was originally 9600 - test with higher baud rates
   byte gpsmsg10[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12}; //10hz
   byte gpsmsgbaud57600[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0xE1,0x00,0x00,0x07,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x16,0x51}; //UBX and NMEA
-  sendUBX(gpsmsg10, sizeof(gpsmsg10));
-  sendUBX(gpsmsgbaud57600, sizeof(gpsmsgbaud57600));
-  Serial3.end();
-  Serial3.begin(57600);
+  //sendUBX(gpsmsg10, sizeof(gpsmsg10));
+  //sendUBX(gpsmsgbaud57600, sizeof(gpsmsgbaud57600));
+  //Serial3.end();
+  //Serial3.begin(57600);
   
   initIMU();
   //setup rc
@@ -363,6 +363,7 @@ void loop() {
   bike_state.data[8] = battery_voltage;
   bike_state.data[9] = imu_data.yaw; //yaw (rad)
   //Serial.print("YAW: "); Serial.println(imu_data.yaw);
+  
   //gps data (Don't change these indexes either)
   while (Serial3.available()) {
     //Serial.print((char)Serial3.read());
@@ -372,7 +373,7 @@ void loop() {
   }
   Serial.print("Lat: ");Serial.println(gps.location.lat());
   Serial.print("Long: ");Serial.println(gps.location.lng());
-  Serial.print("Age: "); Serial.println(gps.time.second()); 
+  //Serial.print("Age: "); Serial.println(gps.time.second()); 
 
   
   gps_state.data[0] = gps.location.lat(); //latitude (deg)
