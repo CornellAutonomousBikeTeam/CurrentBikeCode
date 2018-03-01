@@ -27,6 +27,7 @@ extern volatile float pulse_time6 ;
 extern float desired_angle;  //CH1
 extern int PWM_rear_output;  //CH3
 extern bool nav_mode;
+
 /*Define functions*/
 void calcSignal();
 

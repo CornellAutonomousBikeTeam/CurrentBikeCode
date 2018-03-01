@@ -140,9 +140,12 @@ void setup()
 
   timer_start = 0;
   timer_start2 = 0;
+  timer_start5 = 0;
   timer_start6 = 0;
+  
   attachInterrupt(RC_CH1, calcSignal, CHANGE);
   attachInterrupt(RC_CH2, calcSignal2, CHANGE);
+  attachInterrupt(RC_CH5, calcSignal5, CHANGE);
   attachInterrupt(RC_CH6, calcSignal6, CHANGE);
 
   SerialUSB.begin(115200);
@@ -278,7 +281,7 @@ void setup()
     while(y==oldIndex){
     analogWrite(PWM_front,50);
     y = REG_TC0_CV1;
-    Serial.println("Ticking");
+    //Serial.println("Ticking");
     }
 
   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
@@ -326,10 +329,13 @@ void loop() {
   numTimeSteps++;
 
   //Rear motor controller with RC to switch between controller and RC inputs
-  if (pulse_time6 > 1700 && pulse_time6 < 2100) {
+  if (pulse_time6 > 1400 && pulse_time6 < 1600) {
     foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
+    steer_range = map(pulse_time, 1100, 1900, -70, 70);
+    desired_steer = steer_range * .01 ;
   }
   else {
+    desired_steer = nav_instr;
     rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
     if (rear_pwm > 180) {
       rear_pwm = 180;
@@ -342,18 +348,7 @@ void loop() {
 
   analogWrite(PWM_rear, foreward_speed);
 
-  // Note that we don't need to use the RC controller data here because
-  // we already handle the RC controller in interrupts (see calls of
-  // attachInterrupt)
-  //
-  if (nav_mode == true) {
-    //Nav controls front wheel
-    desired_steer = nav_instr;
-  }
-  else {
-    // RC controls front wheel
-    steer_range = map(pulse_time, 1100, 1900, -70, 70);
-    desired_steer = steer_range * .01 ;
+    
   }
 
   l_start = micros();
