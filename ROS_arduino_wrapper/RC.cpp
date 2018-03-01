@@ -26,7 +26,7 @@ bool nav_mode;
 //this is the time that the last interrupt occurred.
 //you can use this to determine if your receiver has a signal or not.
 
-void calcSignal() //also attached to right joystick
+void calcSignal() //Right joystick (steer)
 {
   //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
   last_interrupt_time = micros();
@@ -51,7 +51,7 @@ void calcSignal() //also attached to right joystick
   }
 }
 
-void calcSignal2() //attached to left joystick
+void calcSignal2() //Left joystick (rear wheel speed)
 {
   //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
   last_interrupt_time2 = micros();
@@ -76,7 +76,7 @@ void calcSignal2() //attached to left joystick
   }
 }
 
-void calcSignal5() //attached to right joystick
+void calcSignal5() //attached to right joystick inexplicably
 {
   //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
   last_interrupt_time5 = micros();
@@ -97,12 +97,6 @@ void calcSignal5() //attached to right joystick
       /*Serial.print("pulse_time5 ");
       Serial.println(pulse_time5);*/
       timer_start5 = 0;
-      if (pulse_time5 > 1000 && pulse_time5 < 1200){
-        nav_mode = false;
-      }
-      else if (pulse_time5 > 1800 && pulse_time5 < 2000){
-        nav_mode = true;
-      }
     }
   }
   
@@ -130,5 +124,12 @@ void calcSignal6() //Correctly attached to ch6
       //restart the timer
       timer_start6 = 0;
     }
+  }
+  if (pulse_time6 > 1400 && pulse_time6 < 1600) {
+    nav_mode = false;
+  }
+  else {
+    nav_mode = true;
+  
   }
 }

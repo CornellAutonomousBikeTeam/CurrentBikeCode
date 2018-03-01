@@ -20,33 +20,21 @@ int bits_so_far = 0;
 //ros::NodeHandle  nh;
 ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500 
 
-//Array containing bike state variables
-std_msgs::Float32MultiArray bike_state;
+std_msgs::Float32MultiArray bike_state; //Array containing bike state variables
+std_msgs::Float32MultiArray gps_state; //Array containing gps state variables
+ros::Publisher state_pub("bike_state", &bike_state); //Publisher object for the bike state
+ros::Publisher gps_pub("gps", &gps_state); //Publisher object for the gps state
+ros::Publisher pid_pub("pid", &pid_controller_data); // Publisher object for the pid controller debug variables
 
-//Array containing gps state variables
-std_msgs::Float32MultiArray gps_state;
+float nav_instr = 0; //Variable for nav steer instructions
 
-//Publisher object for the bike state
-ros::Publisher state_pub("bike_state", &bike_state);
-
-//Publisher object for the gps state
-ros::Publisher gps_pub("gps", &gps_state);
-
-// Publisher object for the pid controller debug variables
-ros::Publisher pid_pub("pid", &pid_controller_data);
-
-float nav_instr = 0;
-void updateInstruction(const std_msgs::Float32& data) {
-  nav_instr = data.data;
-}
 //Ros listener
+void updateInstruction(const std_msgs::Float32& data) {nav_instr = data.data;} //Update nav_instr var with nav algo data
 uint32_t queue_size = 3000; 
 ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction, queue_size);
 
-float temp = 0;
 
-//current cycle's logic
-boolean CH1, CH2, CH3, CH4, CH5, CH6;
+boolean CH1, CH2, CH3, CH4, CH5, CH6; //current cycle's logic
 
 //Timed Loop Variables
 long l_start;
@@ -87,9 +75,47 @@ void sendUBX(byte *UBXmsg, byte msgLength) {
   }
 }
 
+/*Method to set the steer and speed based on either rc or nav instructors depending on mode set by remote*/
+void navOrRC() {
+  if (nav_mode) {
+      desired_steer = nav_instr;
+      rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
+      if (rear_pwm > 180) {
+        rear_pwm = 180;
+      }
+      if (rear_pwm < 60) {
+        rear_pwm = 60;
+      }
+      foreward_speed = rear_pwm;
+    }
+    else { 
+      foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
+      steer_range = map(pulse_time, 1100, 1900, -70, 70);
+      desired_steer = steer_range * .01 ;
+    }
+}
+
+
+/* takes in desired angular velocity, returns pwm. Currently unused. */
+int velocityToPWM (float desiredVelocity) {
+  battery_voltage = analogRead(VOLTAGE_PIN);
+  //Serial.println("pin 63 output " + String(battery_voltage));
+  battery_voltage = battery_voltage / VOLTAGE_CONST;
+
+  //Serial.println("voltage is " + String(battery_voltage));
+  pwm = 256 * (desiredVelocity - VELOCITY_VOLTAGE_C) / (battery_voltage * VELOCITY_VOLTAGE_K);
+  //Serial.println("pwm is  " + String(pwm));
+
+  if (desiredVelocity > 18 ) { //***TO DO*** THIS LIMITATION MUST GO ON ALL OF THE PWM GOING TO THE FRONT MOTOR, NOT JUST THE FEED FORWARD LOOP
+    //put in the warning
+    return maxfront_PWM;
+  } else {
+    return pwm;
+  }
+}
+
 void setup()
 {
-
   nh.initNode();
   int data_size = 12;
   int gps_state_data_size = 12;
@@ -102,17 +128,13 @@ void setup()
   gps_state.layout.data_offset = 0;
   pid_controller_data.layout.data_offset = 0;
 
-  //Allocate memory for the bike_state layout
+  
   bike_state.layout.dim = (std_msgs::MultiArrayDimension *)
-                          malloc(sizeof(std_msgs::MultiArrayDimension) * data_size);
-
-  //Allocate memory for the gps_state layout
+                          malloc(sizeof(std_msgs::MultiArrayDimension) * data_size); //Allocate memory for the bike_state layout
   gps_state.layout.dim = (std_msgs::MultiArrayDimension *)
-                         malloc(sizeof(std_msgs::MultiArrayDimension) * data_size);
-
-  // Allocate memory for the pid_controller_data layout
+                         malloc(sizeof(std_msgs::MultiArrayDimension) * data_size); //Allocate memory for the gps_state layout
   pid_controller_data.layout.dim = (std_msgs::MultiArrayDimension *)
-      malloc(sizeof(std_msgs::MultiArrayDimension) * pid_data_size);
+      malloc(sizeof(std_msgs::MultiArrayDimension) * pid_data_size); // Allocate memory for the pid_controller_data layout
 
   bike_state.layout.dim[0].label = "desired_vel";
   bike_state.layout.dim[1].label = "current_vel";
@@ -149,24 +171,19 @@ void setup()
 
   SerialUSB.begin(115200);
   Serial.begin(115200); //Set to the same rate as ROS for correct Serial connections
+  
   //GPS
-  // GPS baudrate (gps hardware runs natively at 9600)  
-  Serial3.begin(9600); //This was originally 9600 - test with higher baud rates
+  
+  Serial3.begin(9600); //GPS baudrate (gps hardware runs natively at 9600)  
   byte gpsmsg10[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12}; //10hz
   byte gpsmsgbaud57600[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0xE1,0x00,0x00,0x07,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x16,0x51}; //UBX and NMEA
-  //sendUBX(gpsmsg10, sizeof(gpsmsg10));
-  //sendUBX(gpsmsgbaud57600, sizeof(gpsmsgbaud57600));
-  //Serial3.end();
-  //Serial3.begin(57600);
   
   initIMU();
-  //setup rc
-  //  pinMode(front_steer_value, INPUT);
-  //  pinMode(back_wheel_speed, INPUT);
 
   //setup Encoder
   pinMode(REnot, OUTPUT);
   pinMode(DE, OUTPUT);
+  
   // activate peripheral functions for quad pins
   REG_PIOB_PDR = mask_quad_A;     // activate peripheral function (disables all PIO functionality)
   REG_PIOB_ABSR |= mask_quad_A;   // choose peripheral option B
@@ -175,21 +192,10 @@ void setup()
   REG_PIOB_PDR = mask_idx;     // activate peripheral function (disables all PIO functionality)
   REG_PIOB_ABSR |= mask_idx;   // choose peripheral option B
 
-
-  // activate clock for TC0 and TC1
-  REG_PMC_PCER0 = (1 << 27) | (1 << 28) | (1 << 29);
-
-  // select XC0 as clock source and set capture mode
-  REG_TC0_CMR0 = 5;
-
-
-  // activate quadrature encoder and position measure mode, no filters
-  REG_TC0_BMR = (1 << 9) | (1 << 8) | (1 << 12);
-
-
-  // activate the interrupt enable register for index counts (stored in REG_TC0_CV1)
-  REG_TC0_QIER = 1;
-
+  REG_PMC_PCER0 = (1 << 27) | (1 << 28) | (1 << 29); // activate clock for TC0 and TC1
+  REG_TC0_CMR0 = 5; // select XC0 as clock source and set capture mode
+  REG_TC0_BMR = (1 << 9) | (1 << 8) | (1 << 12); // activate quadrature encoder and position measure mode, no filters
+  REG_TC0_QIER = 1; // activate the interrupt enable register for index counts (stored in REG_TC0_CV1)
 
   // enable the clock (CLKEN=1) and reset the counter (SWTRG=1)
   // SWTRG = 1 necessary to start the clock!!
@@ -240,68 +246,25 @@ void setup()
   pinMode(47, OUTPUT);
 
 
-
-  // tell user to press any key to calibrate wheel
-  //  int  message_delivered = 0;
-  //   while (!(Serial.available())) {
-  //    if (message_delivered == 0) {
-  //      Serial.println("Calibrate the front wheel") ;
-  //      message_delivered = 1;
-  //    }
-  //   }
-  //
-  //  the follwing loop will not terminate until wheel passes front tick on encoder twice. The second time should be passed very slowly-
-  //  this will allow for the most accurate location to be found for the center alignment of the front wheel with the bike.
-
   signed int y = REG_TC0_CV1;
   oldIndex = y;
   digitalWrite(DIR, HIGH);
 
-    //Front wheel calibration
-    
-    while(y==oldIndex){
+    //Front wheel calibration loop
+    while(y==oldIndex) {
     analogWrite(PWM_front,50);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");
     }
 
-  //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
-  x_offset = REG_TC0_CV0;
+  x_offset = REG_TC0_CV0;   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
   analogWrite(PWM_front, 0);
+  
   //rear motor initialization
-
   int pwm = 60;
-  int olav = 0;
-  //  while (olav < pwm){ //Ramps up speed- Workaround for rear motor safety features
-  //    analogWrite(PWM_rear, olav);
-  //    delay(100);
-  //    olav=olav+10;
-  //Serial.println("tteeeeeettt");
-  //  }
-  //ramp up rear motor to 60 pwm
   rampToPWM(170, 0);
 
-  // LED to signal setup function done
-  digitalWrite(LED_1, HIGH);
-}
-
-
-/* takes in desired angular velocity, returns pwm. Currently unused. */
-int velocityToPWM (float desiredVelocity) {
-  battery_voltage = analogRead(VOLTAGE_PIN);
-  //Serial.println("pin 63 output " + String(battery_voltage));
-  battery_voltage = battery_voltage / VOLTAGE_CONST;
-
-  //Serial.println("voltage is " + String(battery_voltage));
-  pwm = 256 * (desiredVelocity - VELOCITY_VOLTAGE_C) / (battery_voltage * VELOCITY_VOLTAGE_K);
-  //Serial.println("pwm is  " + String(pwm));
-
-  if (desiredVelocity > 18 ) { //***TO DO*** THIS LIMITATION MUST GO ON ALL OF THE PWM GOING TO THE FRONT MOTOR, NOT JUST THE FEED FORWARD LOOP
-    //put in the warning
-    return maxfront_PWM;
-  } else {
-    return pwm;
-  }
+  digitalWrite(LED_1, HIGH); //LED to signal setup function done
 }
 
 //Loop variables
@@ -309,34 +272,15 @@ int blinkState = HIGH;
 void loop() {
   numTimeSteps++;
 
-  //Rear motor controller with RC to switch between controller and RC inputs
-  if (pulse_time6 > 1400 && pulse_time6 < 1600) {
-    foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
-    steer_range = map(pulse_time, 1100, 1900, -70, 70);
-    desired_steer = steer_range * .01 ;
-  }
-  else {
-    desired_steer = nav_instr;
-    rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
-    if (rear_pwm > 180) {
-      rear_pwm = 180;
-    }
-    if (rear_pwm < 60) {
-      rear_pwm = 60;
-    }
-    foreward_speed = rear_pwm;
-  }
+  navOrRC();
 
   analogWrite(PWM_rear, foreward_speed);
 
-    
-  }
-
   l_start = micros();
+  
   float encoder_position = updateEncoderPosition(); //output is current position wrt front zero
   //Serial.println("Got encoder position");
   roll_t imu_data = updateIMUData();
-  //updateIMUDataSerial();
   //Serial.println("Got IMU data");
   float desiredVelocity = balanceController(((1) * (imu_data.roll_angle)), (1) * imu_data.roll_rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
   //Serial.println("Got desired velocity");
@@ -369,7 +313,6 @@ void loop() {
   Serial.print("Lat: ");Serial.println(gps.location.lat());
   Serial.print("Long: ");Serial.println(gps.location.lng());
   //Serial.print("Age: "); Serial.println(gps.time.second()); 
-
   
   gps_state.data[0] = gps.location.lat(); //latitude (deg)
   gps_state.data[1] = gps.location.lng(); //longitude (deg)
@@ -395,38 +338,18 @@ void loop() {
   curr_millis = millis();
   //    delay(1);
   digitalWrite(LED_3, blinkState);
-  if(blinkState == HIGH) {
-    blinkState = LOW;
-  } else {
-    blinkState = HIGH;
-  }
+  if(blinkState == HIGH) {blinkState = LOW;} 
+  else {blinkState = HIGH;}
+    
   total_millis = total_millis + (curr_millis - prev_millis);
-  //SerialUSB.println("Total millis: " + String(total_millis));
   count += 1;
-  if(total_millis >= 1000){
+  if(total_millis >= 1000) {
     //SerialUSB.println("RUNNING AT" + String(count) + " HZ");
     total_millis = 0;  l_diff = micros() - l_start;
-
     count = 0;
   }
-  /*
-  if (l_diff < interval) {
-    digitalWrite(LED_2, HIGH);
-    delayMicroseconds(interval - l_diff);
-  } else {
-    digitalWrite(LED_2, LOW);
-    //      Serial.println("LOOP LENGTH WAS VIOLATED. LOOP TIME WAS: " + String(l_diff));
-    //      while(true){}
-  }*/
-  //}
-  /*
-    Method that sets value "speed" to current speed in m/s
-  */
-
-  
 }
 
 
 
-//}
 

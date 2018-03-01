@@ -156,22 +156,18 @@ float getIMU(byte commandToWrite, int x){
         data[ii].b[jj] =  transferByte(0xFF);
       }
     }    
-     
     //Swap bytes from big endian to little endian
-    for( int mm=0; mm<3; mm++) {
+    for(int mm=0; mm<3; mm++) {
       endianSwap(data[mm].b);
     }
-    
     return data[x].fval;  //returns roll angle or roll rate
-
   }
   else{
     getIMU(commandToWrite, x);
   }
 }
 
-//OLD Retrieve data from IMU about roll angle and rate and return it
-
+/* Retrieve data from IMU about roll angle and rate and return it */
 struct roll_t updateIMUData() {
   roll_t roll_data;
 
@@ -185,7 +181,7 @@ struct roll_t updateIMUData() {
   return roll_data;
 }
 
-//NEW
+/* Read from buffer. Used up UpdateIMUSerial */
 void readBuffer(float dataArray[]) {
   int i = 0;
   String data;
@@ -207,7 +203,7 @@ void readBuffer(float dataArray[]) {
     }
   }
 }
-
+/* Jordan and Bobby's failed semester-long attempt at switching to serial*/
 void updateIMUDataSerial() {
   Serial1.write(":1\n"); //send command to get euler angles for orientation
   //Serial.println("Sent command for euler angles");

@@ -22,11 +22,9 @@ extern float gyro_rate[3]; //array that contains the corrected gyro rate in radi
 
 
 /*Define functions*/
-//Initialize IMU
-void initIMU(void);
+void initIMU(void); //Initialize IMU
 
-//IMU data
-float getIMU(byte, int);
+float getIMU(byte, int); //IMU data
 
 struct roll_t updateIMUData();
 
