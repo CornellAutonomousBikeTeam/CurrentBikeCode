@@ -177,7 +177,8 @@ void setup()
   Serial3.begin(9600); //GPS baudrate (gps hardware runs natively at 9600)  
   byte gpsmsg10[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12}; //10hz
   byte gpsmsgbaud57600[] = {0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0xE1,0x00,0x00,0x07,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x16,0x51}; //UBX and NMEA
-  
+  sendUBX(gpsmsg10, sizeof(gpsmsg10));
+
   initIMU();
 
   //setup Encoder
@@ -310,8 +311,8 @@ void loop() {
     Serial3.flush(); //WITHOUT THIS THE BUFFER WILL NOT BE ABLE TO BE READ AS FAST AS IT IS WRITTEN TO AND THIS WILL LOOP FOREVER
     //Serial.println(gps.location.isUpdated());
   }
-  Serial.print("Lat: ");Serial.println(gps.location.lat());
-  Serial.print("Long: ");Serial.println(gps.location.lng());
+  //Serial.print("Lat: ");Serial.println(gps.location.lat());
+  //Serial.print("Long: ");Serial.println(gps.location.lng());
   //Serial.print("Age: "); Serial.println(gps.time.second()); 
   
   gps_state.data[0] = gps.location.lat(); //latitude (deg)
