@@ -79,6 +79,7 @@ void sendUBX(byte *UBXmsg, byte msgLength) {
 void navOrRC() {
   if (nav_mode) {
       desired_steer = nav_instr;
+      desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
       rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
       if (rear_pwm > 180) {
         rear_pwm = 180;
@@ -92,7 +93,9 @@ void navOrRC() {
       foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
       steer_range = map(pulse_time, 1100, 1900, -70, 70);
       desired_steer = steer_range * .01 ;
+      desired_lean = (speed*speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
     }
+
 }
 
 

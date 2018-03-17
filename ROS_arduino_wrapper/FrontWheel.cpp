@@ -28,6 +28,7 @@ int end_CH5;
 int end_CH6;
 
 float desired_steer = 0;
+float desired_lean = 0;
 float desired_pos_array[250];
 float theo_position = 0;
 
@@ -177,7 +178,8 @@ float frontWheelControl(float desiredVelocity, float current_pos) {
 }
 /* Function that returns desired angular velocity of front wheel */
 float balanceController(float roll_angle, float roll_rate, float encoder_angle) {
-  float desiredSteerRate = (k1 * roll_angle) + (k2 * roll_rate) + k3 * (encoder_angle - desired_steer);
+  float desiredSteerRate = k1 * (roll_angle - desired_lean) + k2 * roll_rate + 
+    k3 * (encoder_angle - desired_steer);
   if (desiredSteerRate > 10) {
     desiredSteerRate = 10;
   }
