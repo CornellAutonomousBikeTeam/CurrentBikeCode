@@ -31,7 +31,7 @@ float nav_instr = 0; //Variable for nav steer instructions
 //Ros listener
 void updateInstruction(const std_msgs::Float32& data) {nav_instr = data.data;} //Update nav_instr var with nav algo data
 uint32_t queue_size = 3000; 
-ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction, queue_size);
+ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction);
 
 
 boolean CH1, CH2, CH3, CH4, CH5, CH6; //current cycle's logic
@@ -269,6 +269,7 @@ void setup()
   rampToPWM(170, 0);
 
   digitalWrite(LED_1, HIGH); //LED to signal setup function done
+  nav_mode = true;
 }
 
 //Loop variables
@@ -276,7 +277,7 @@ int blinkState = HIGH;
 void loop() {
   numTimeSteps++;
 
-  navOrRC();
+  //navOrRC();
 
   analogWrite(PWM_rear, foreward_speed);
 
@@ -352,6 +353,7 @@ void loop() {
     total_millis = 0;  l_diff = micros() - l_start;
     count = 0;
   }
+  SerialUSB.print("Nav_instr: ");Serial.println(nav_instr);
 }
 
 
