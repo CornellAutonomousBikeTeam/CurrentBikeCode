@@ -119,8 +119,8 @@ void calcSignal6() //Correctly attached to ch6
     {
       //record the pulse time
       pulse_time6 = ((volatile int)micros() - timer_start6); //pulse time is the output from the rc value that we need to transform into a pwm value
-      Serial.print("pulse_time6 ");
-      Serial.println(pulse_time6);
+      //Serial.print("pulse_time6 ");
+      //Serial.println(pulse_time6);
       //restart the timer
       timer_start6 = 0;
     }
