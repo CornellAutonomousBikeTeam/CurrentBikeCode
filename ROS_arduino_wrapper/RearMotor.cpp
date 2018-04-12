@@ -64,6 +64,8 @@ void getPeriod() {
   tNew = micros();
   double T = (tNew - tOld);
   if ((1.2446) * (1E6) / (28 * T) < 100) {
+    //1.2446 is the Circumfrence of the wheel in meters
+    //multiplying the denominator by 28 (for the 28 hall sensors), gives us a denominator of s/rev (not s/ (1/28*rev))
     speed = (1.2446) * (1E6) / (28 * T) ;
   }
 }

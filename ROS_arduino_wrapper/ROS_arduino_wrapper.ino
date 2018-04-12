@@ -79,7 +79,7 @@ void sendUBX(byte *UBXmsg, byte msgLength) {
 void navOrRC() {
   if (nav_mode) {
       desired_steer = nav_instr;
-     // desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
+      desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
       rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
       if (rear_pwm > 180) {
         rear_pwm = 180;
@@ -94,7 +94,8 @@ void navOrRC() {
       foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
       steer_range = map(pulse_time, 1100, 1900, -70, 70);
       desired_steer = steer_range * .01 ;
-    //  desired_lean = (speed*speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
+      desired_lean = (speed*speed)*desired_steer; //phi_d = (v^2/l/g) * delta_d
+     // desired_lean = (gps_state.data[8]*gps_state.data[8]/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
       Serial.println("RC mode");
     }
 
@@ -350,6 +351,7 @@ void loop() {
 
   //Serial.println("roll angle: " + String(imu_data.roll_angle) + " roll rate: " + String(imu_data.roll_rate) + " encoder: " + String(encoder_position));
   Serial.println("Pulse 1: " + String(pulse_time) + " Pulse 2: " + String(pulse_time2) + " Pulse 5: " + String(pulse_time5) + " Pulse 6: " +String(pulse_time6));
+  SerialUSB.println(speed);
     
   total_millis = total_millis + (curr_millis - prev_millis);
   count += 1;
@@ -358,7 +360,7 @@ void loop() {
     total_millis = 0;  l_diff = micros() - l_start;
     count = 0;
   }
-  SerialUSB.print("Nav_instr: ");Serial.println(nav_instr);
+  //SerialUSB.print("Nav_instr: ");Serial.println(nav_instr);
 }
 
 
