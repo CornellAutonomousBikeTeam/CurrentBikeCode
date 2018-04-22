@@ -92,7 +92,7 @@ void navOrRC() {
     }
     else { 
       foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
-      steer_range = map(pulse_time, 1100, 1900, -70, 70);
+      steer_range = map(pulse_time, 1100, 1900, 60, -60);
       desired_steer = steer_range * .01 ;
       desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
      // desired_lean = (speed*speed)*desired_steer; //phi_d = (v^2/l/g) * delta_d
