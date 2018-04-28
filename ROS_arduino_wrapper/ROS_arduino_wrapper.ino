@@ -27,6 +27,8 @@ ros::Publisher gps_pub("gps", &gps_state); //Publisher object for the gps state
 ros::Publisher pid_pub("pid", &pid_controller_data); // Publisher object for the pid controller debug variables
 
 float nav_instr = 0; //Variable for nav steer instructions
+float k_yaw = 0.25; //for straight line correction
+float yaw0;
 
 //Ros listener
 void updateInstruction(const std_msgs::Float32& data) {nav_instr = data.data;} //Update nav_instr var with nav algo data
@@ -78,7 +80,7 @@ void sendUBX(byte *UBXmsg, byte msgLength) {
 /*Method to set the steer and speed based on either rc or nav instructors depending on mode set by remote*/
 void navOrRC() {
   if (nav_mode) {
-      desired_steer = nav_instr;
+      desired_steer = -1*k_yaw*(imu_data.yaw-yaw0);
       desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
       rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
       if (rear_pwm > 180) {
@@ -267,13 +269,16 @@ void setup()
 
   x_offset = REG_TC0_CV0;   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
   analogWrite(PWM_front, 0);
-  
+    
   //rear motor initialization
   int pwm = 60;
   rampToPWM(170, 0);
 
   digitalWrite(LED_1, HIGH); //LED to signal setup function done
   nav_mode = true;
+
+  //To do straight line correction: record initial yaw
+  yaw0 = imu_data.yaw;  //yaw (rad)
 }
 
 //Loop variables
