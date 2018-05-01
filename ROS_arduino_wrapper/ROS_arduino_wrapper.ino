@@ -88,7 +88,6 @@ void navOrRC() {
         rear_pwm = 60;
       }
       foreward_speed = rear_pwm;
-      SerialUSB.println("Nav mode");
     }
     else { 
       foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
@@ -97,7 +96,6 @@ void navOrRC() {
       desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
      // desired_lean = (speed*speed)*desired_steer; //phi_d = (v^2/l/g) * delta_d
      // desired_lean = (gps_state.data[8]*gps_state.data[8]/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
-      SerialUSB.println("RC mode");
     }
 
 }
@@ -310,6 +308,8 @@ void loop() {
   bike_state.data[7] = foreward_speed; //rear motor commanded speed (pwm)
   bike_state.data[8] = battery_voltage;
   bike_state.data[9] = imu_data.yaw; //yaw (rad)
+  bike_state.data[10] = hall_sensor_tick_count; //Total number of "ticks"
+  bike_state.data[11] = hall_sensor_timestamp; //Timestamp between "ticks"
   //Serial.print("YAW: "); Serial.println(imu_data.yaw);
   
   //gps data (Don't change these indexes either)
@@ -349,10 +349,6 @@ void loop() {
   digitalWrite(LED_3, blinkState);
   if(blinkState == HIGH) {blinkState = LOW;} 
   else {blinkState = HIGH;}
-
-  //Serial.println("roll angle: " + String(imu_data.roll_angle) + " roll rate: " + String(imu_data.roll_rate) + " encoder: " + String(encoder_position));
-  SerialUSB.println("Pulse 1: " + String(pulse_time) + " Pulse 2: " + String(pulse_time2) + " Pulse 5: " + String(pulse_time5) + " Pulse 6: " +String(pulse_time6));
-  SerialUSB.println(speed);
     
   total_millis = total_millis + (curr_millis - prev_millis);
   count += 1;

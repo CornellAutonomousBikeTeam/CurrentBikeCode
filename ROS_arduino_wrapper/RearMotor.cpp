@@ -9,8 +9,10 @@ boolean forward = true; //if False, is running in reverse
 //Variables for calculating rear motor speed
 float tOld = 0; //first time reading
 float tNew = 0; //second time reading
-double T = 0;
 
+//Debugging
+double hall_sensor_timestamp = 0;
+int hall_sensor_tick_count = 0;
 //Rear motor controller variable
 float gain_p = 5;
 float desired_speed = 3; //(m/s)
@@ -62,10 +64,11 @@ void switchDirection(boolean forward) {
 void getPeriod() {
   float tOld = tNew;
   tNew = micros();
-  double T = (tNew - tOld);
-  if ((1.2446) * (1E6) / (28 * T) < 100) {
+  hell_sensor_tick_count++;
+  hall_sensor_timestamp = (tNew - tOld);
+  if ((1.2446) * (1E6) / (28 * hall_sensor_timestamp) < 100) {
     //1.2446 is the Circumfrence of the wheel in meters
     //multiplying the denominator by 28 (for the 28 hall sensors), gives us a denominator of s/rev (not s/ (1/28*rev))
-    speed = (1.2446) * (1E6) / (28 * T) ;
+    speed = (1.2446) * (1E6) / (28 * hall_sensor_timestamp) ;
   }
 }
