@@ -12,10 +12,10 @@ TinyGPSPlus gps;
 #include <math.h>
 
 int count = 0; //used to determine if we are running at 5hz
-int prev_millis = 0;
-int curr_millis = 0;
-int total_millis = 0;
-int bits_so_far = 0;
+int prev_millis = 0; //Used to help calculate time since last update
+int curr_millis = 0; //Used to help calculate time since last update
+int total_millis = 0; //Holds total time passed so we know when to update Hz
+int bits_so_far = 0; //Unclear what this is used for atm
 
 //ros::NodeHandle  nh;
 ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500 
