@@ -2,30 +2,29 @@
 #include <Arduino.h>
 
 /*Variables*/
-volatile unsigned long timer_start;  //micros when the pin goes HIGH
-volatile unsigned long timer_start2;  //micros when the pin goes HIGH
-volatile unsigned long timer_start5; 
-volatile unsigned long timer_start6;  //micros when the pin goes HIGH
-volatile int last_interrupt_time; //calcSignal is the interrupt handler
-volatile int last_interrupt_time2; //calcSignal is the interrupt handler
-volatile int last_interrupt_time5;
-volatile int last_interrupt_time6; //calcSignal is the interrupt handler
-volatile float steer_range ;
-volatile float foreward_speed ;
-volatile float pulse_time ;
-volatile float pulse_time2 ;
-volatile float pulse_time5 ;
-volatile float pulse_time6 ;
-float desired_angle;
+volatile unsigned long timer_start;  
+volatile unsigned long timer_start2;  
+volatile unsigned long timer_start5;  
+volatile unsigned long timer_start6;  
+volatile int last_interrupt_time; 
+volatile int last_interrupt_time2;
+volatile int last_interrupt_time5; 
+volatile int last_interrupt_time6; 
+volatile float steer_range ; 
+volatile float foreward_speed ; 
+volatile float pulse_time ; 
+volatile float pulse_time2 ; 
+volatile float pulse_time5 ; 
+volatile float pulse_time6 ; 
+float desired_angle; 
 int PWM_rear_output;
 bool nav_mode;
-/*Functions*/
+
 
 //difference between timer_start and micros() is the length of time that the pin
 //was HIGH - the PWM pulse length. volatile int pulse_time;
-//this is the time that the last interrupt occurred.
+//this is the time that the last interrupt occurred. 
 //you can use this to determine if your receiver has a signal or not.
-
 void calcSignal()
 {
   //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
@@ -102,7 +101,7 @@ void calcSignal5()
   
 }
 
-void calcSignal6() //Correctly attached to ch6
+void calcSignal6() 
 {
   //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
   last_interrupt_time6 = micros();

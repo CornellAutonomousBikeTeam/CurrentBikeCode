@@ -53,63 +53,8 @@ void initIMU(void){
   //Initialize serial
   Serial1.begin(115200);
 }
-/*
-  SPI.transfer(0x50); //set streaming slots
-  delay(1);
-  SPI.transfer(0x01); //get tared euler angles command
-  SPI.transfer(0xFF); //don't care
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0x52);
-  delay(1);
-*/
-//  //Check
-//  unsigned int Result = SPI.transfer(0x51); //get streaming slots
-//  Serial.println(Result);
-//  
-////
-////  SPI.transfer(0x52); //set streaming timing
-////  SPI.transfer(10000); //streaming interval ÂµS
-////  SPI.transfer(0xFFFFFFFF, 4); //streaming duration
-////  SPI.transfer(500);//Delay ÂµS
-//
-//  //check timing 
-//  unsigned int Result2 = SPI.transfer(0x53);
-//  Serial.println(Result2);
-//
-//  SPI.transfer(0x55);//start streaming
-//  
-//  return;
-//}
-///////////////////////////////////////////////////////////////////////////////////////
 
 /*getIMU*/
-/////////////////////////////////////////////////////////////////////////////////////
-//float getIMU(byte commandToWrite){
-//  for (int ii=0; ii<3; ii++) {
-//    for (int jj=0; jj<4; jj++) {
-//      data[ii].b[jj] =  SPI_RDR; //read and store data directly from spi received data register
-//    }
-// } 
-//  byte data = B00000000;
-//  for (int i=0; i<8; i++) {
-//   byte bit0 = digitalRead(74);
-//        data = data | bit0;
-//           data << 1;
-//        
-//
-//  for( int mm=0; mm<3; mm++) {
-//    endianSwap(data[mm].b);
-//  }
-//
-//  return data;
-//     
-//}
-
 float getIMU(byte commandToWrite, int x){
 
     //SPI.beginTransaction(settings);
@@ -167,7 +112,6 @@ float getIMU(byte commandToWrite, int x){
   }
 }
 
-/* Retrieve data from IMU about roll angle and rate and return it */
 struct roll_t updateIMUData() {
   roll_t roll_data;
 

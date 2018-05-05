@@ -207,7 +207,7 @@ void setup()
   REG_TC0_CCR1 = 5;
 
   //setup Motor Outputs
-  pinMode(DIR, OUTPUT);
+  pinMode(DIR, OUTPUT); //Direction of front wheel's rotation
   pinMode (PWM_front, OUTPUT);
   pinMode (PWM_rear, OUTPUT);
 
