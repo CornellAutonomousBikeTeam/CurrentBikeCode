@@ -143,25 +143,9 @@ float eulerIntegrate(float desiredVelocity, float current_pos) {
  */
 float frontWheelControl(float desiredVelocity, float current_pos) {
 
-  // steer_contribution is a global variable, so we don't need to make
-  // it a parameter of this function
-
   unsigned long current_t = micros();
-
-  //  if (n == 0) {
-  //    float desired_pos = 0;
-  //    PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition);
-  //    n++;
-  //  }
   float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
   //Serial.println(String(theo_position) + '\t' + String(desired_pos) + '\t' + String(current_pos)) ;
-
-  /*
-    if (Serial.available()){
-    desired_pos = M_PI / 180 * Serial.parseFloat();
-    }
-  */
-
   //Serial.println(String(steer_contribution) + '\t' +  String(commanded_speed));
 
   // The PID_Controller function will actually rotate the front motor!

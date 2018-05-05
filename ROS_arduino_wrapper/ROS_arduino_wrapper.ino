@@ -70,28 +70,24 @@ float VELOCITY_VOLTAGE_C = -1.2002;
 
 //Method for sending hex messages to the gps
 void sendUBX(byte *UBXmsg, byte msgLength) {
-  for (int i = 0; i < msgLength; i++) {
-    Serial3.write(UBXmsg[i]);
-  }
+  for (int i = 0; i < msgLength; i++) {Serial3.write(UBXmsg[i]);}
 }
 
 /*Method to set the steer and speed based on either rc or nav instructors depending on mode set by remote*/
 void navOrRC() {
   if (nav_mode) {
-      desired_steer = nav_instr;
+      desired_steer = nav_instr; //Get desired steer from the nav instructions
       desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
       rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
-      if (rear_pwm > 180) {
-        rear_pwm = 180;
-      }
-      if (rear_pwm < 60) {
-        rear_pwm = 60;
-      }
+      
+      if (rear_pwm > 180) {rear_pwm = 180;} //Max PWM value that bike can do, regardless of what nav algo wants to say
+      if (rear_pwm < 60) {rear_pwm = 60;} //Min PWM value that bike can do, regardless of what nav algo wants to say
+      
       foreward_speed = rear_pwm;
       SerialUSB.println("Nav mode");
     }
     else { 
-      foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
+      foreward_speed = map(pulse_time2, 1100, 1900, 0, 200); 
       steer_range = map(pulse_time, 1100, 1900, 60, -60);
       desired_steer = steer_range * .01 ;
       desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
@@ -171,7 +167,7 @@ void setup()
   timer_start5 = 0;
   timer_start6 = 0;
   
-  attachInterrupt(RC_CH1, calcSignal, CHANGE);
+  attachInterrupt(RC_CH1, calcSignal, CHANGE); 
   attachInterrupt(RC_CH2, calcSignal2, CHANGE);
   attachInterrupt(RC_CH5, calcSignal5, CHANGE);
   attachInterrupt(RC_CH6, calcSignal6, CHANGE);
@@ -273,7 +269,8 @@ void setup()
   rampToPWM(170, 0);
 
   digitalWrite(LED_1, HIGH); //LED to signal setup function done
-  nav_mode = true;
+
+  nav_mode = true; //Variable that tells whether bike is in nav mode or not
 }
 
 //Loop variables

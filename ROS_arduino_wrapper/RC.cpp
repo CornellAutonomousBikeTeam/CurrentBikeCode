@@ -26,7 +26,7 @@ bool nav_mode;
 //this is the time that the last interrupt occurred.
 //you can use this to determine if your receiver has a signal or not.
 
-void calcSignal() //Right joystick (steer)
+void calcSignal()
 {
   //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
   last_interrupt_time = micros();
@@ -51,7 +51,7 @@ void calcSignal() //Right joystick (steer)
   }
 }
 
-void calcSignal2() //Left joystick (rear wheel speed)
+void calcSignal2()
 {
   //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
   last_interrupt_time2 = micros();
@@ -76,7 +76,7 @@ void calcSignal2() //Left joystick (rear wheel speed)
   }
 }
 
-void calcSignal5() //attached to right joystick inexplicably
+void calcSignal5()
 {
   //record the interrupt time so that we can tell if the receiver has a signal from the transmitter
   last_interrupt_time5 = micros();
