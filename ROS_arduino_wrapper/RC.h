@@ -5,8 +5,8 @@
 /*Define definite variables*/
 //RC
 #define RC_CH1 51     //Steer Angle 
-#define RC_CH2 28     //NOT IN USE
-#define RC_CH3 25     //Velocity 
+#define RC_CH2 28     //Velocity
+#define RC_CH3 25     //NOT IN USE
 #define RC_CH4 33     //NOT IN USE
 #define RC_CH5 27     //Nav mode
 #define RC_CH6 32     //Landing Gear 
