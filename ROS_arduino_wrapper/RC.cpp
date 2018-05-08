@@ -16,8 +16,6 @@ volatile float pulse_time ;
 volatile float pulse_time2 ; 
 volatile float pulse_time5 ; 
 volatile float pulse_time6 ; 
-float desired_angle; 
-int PWM_rear_output;
 bool nav_mode;
 
 

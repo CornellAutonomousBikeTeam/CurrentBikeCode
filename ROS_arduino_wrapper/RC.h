@@ -24,8 +24,6 @@ extern volatile float pulse_time; //Used in calcSignal1
 extern volatile float pulse_time2; //Used in calcSignal2
 extern volatile float pulse_time5; //Used in calcSignal5
 extern volatile float pulse_time6; //Used in calcSignal6
-extern float desired_angle;  //NOT IN USE
-extern int PWM_rear_output;  //NOT IN USE
 extern bool nav_mode; //Nav or RC mode
 
 /*Define functions*/

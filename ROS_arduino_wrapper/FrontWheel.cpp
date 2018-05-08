@@ -6,31 +6,8 @@ const long interval = 10000;
 std_msgs::Float32MultiArray pid_controller_data;
 int steer_dir = 0;
 
-int duration_CH1;
-int duration_CH2;
-int duration_CH3;
-int duration_CH4;
-int duration_CH5;
-int duration_CH6;
-
-int start_CH1;
-int start_CH2; 
-int start_CH3;
-int start_CH4;
-int start_CH5;
-int start_CH6;
-
-int end_CH1;
-int end_CH2; 
-int end_CH3;
-int end_CH4;
-int end_CH5;
-int end_CH6;
-
 float desired_steer = 0;
 float desired_lean = 0;
-float desired_pos_array[250];
-float theo_position = 0;
 
 int maxfront_PWM = 110;
 

@@ -21,34 +21,8 @@ extern std_msgs::Float32MultiArray pid_controller_data; //Array containing pid c
 
 extern int steer_dir; 
 
-//timers for each channel (DO NOT SEEM TO BE IN USE)
-extern int duration_CH1;  
-extern int duration_CH2;
-extern int duration_CH3;
-extern int duration_CH4;
-extern int duration_CH5;
-extern int duration_CH6;
-
-//Start pulses for each channel (DO NOT SEEM TO BE IN USE, but prolly a good idea to use instead of hardcoded bs below)
-extern int start_CH1;
-extern int start_CH2; 
-extern int start_CH3;
-extern int start_CH4;
-extern int start_CH5;
-extern int start_CH6;
-
-//End pulses for each channel (DO NOT SEEM TO BE IN USE, but prolly a good idea to use instead of hardcoded bs below)
-extern int end_CH1;
-extern int end_CH2; 
-extern int end_CH3;
-extern int end_CH4;
-extern int end_CH5;
-extern int end_CH6;
-
 extern float desired_steer; //Steer we want to achieve (either from RC or nav instruction)
 extern float desired_lean; //Lean we want to achieve (either from RC or nav instruction)
-extern float desired_pos_array[250]; //DOES NOT SEEM TO BE IN USE
-extern float theo_position; //DOES NOT SEEM TO BE IN USE
 
 extern int maxfront_PWM; //Define max front wheel PWM
 

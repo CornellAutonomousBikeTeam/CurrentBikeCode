@@ -33,11 +33,6 @@ float getIMU(byte, int);
 /* Retrieve data from IMU about roll angle and rate and return it */
 struct roll_t updateIMUData();
 
-/* Not in use, called by updateIMUSerial() */
-void readBuffer(float*);
-
-/* Not in use, used in attempt to switch the bike to the serial protocal from SPI*/
-void updateIMUSerial();
 
 #endif //IMU_h
 

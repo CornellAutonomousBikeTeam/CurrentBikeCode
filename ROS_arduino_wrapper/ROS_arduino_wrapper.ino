@@ -98,25 +98,6 @@ void navOrRC() {
 
 }
 
-
-/* takes in desired angular velocity, returns pwm. Currently unused. */
-int velocityToPWM (float desiredVelocity) {
-  battery_voltage = analogRead(VOLTAGE_PIN);
-  //Serial.println("pin 63 output " + String(battery_voltage));
-  battery_voltage = battery_voltage / VOLTAGE_CONST;
-
-  //Serial.println("voltage is " + String(battery_voltage));
-  pwm = 256 * (desiredVelocity - VELOCITY_VOLTAGE_C) / (battery_voltage * VELOCITY_VOLTAGE_K);
-  //Serial.println("pwm is  " + String(pwm));
-
-  if (desiredVelocity > 18 ) { //***TO DO*** THIS LIMITATION MUST GO ON ALL OF THE PWM GOING TO THE FRONT MOTOR, NOT JUST THE FEED FORWARD LOOP
-    //put in the warning
-    return maxfront_PWM;
-  } else {
-    return pwm;
-  }
-}
-
 void setup()
 {
   nh.initNode();
