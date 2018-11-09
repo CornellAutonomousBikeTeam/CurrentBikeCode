@@ -18,13 +18,16 @@ int total_millis = 0;
 int bits_so_far = 0;
 
 //ros::NodeHandle  nh;
-ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500 
+ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh;
 
+// Definitions for ROS topics
 std_msgs::Float32MultiArray bike_state; //Array containing bike state variables
 std_msgs::Float32MultiArray gps_state; //Array containing gps state variables
+std_msgs::Float32MultiArray dr_state; // Array containing dead reckoning state variables
 ros::Publisher state_pub("bike_state", &bike_state); //Publisher object for the bike state
 ros::Publisher gps_pub("gps", &gps_state); //Publisher object for the gps state
-ros::Publisher pid_pub("pid", &pid_controller_data); // Publisher object for the pid controller debug variables
+//ros::Publisher pid_pub("pid", &pid_controller_data); // Publisher object for the pid controller debug variables
+ros::Publisher dr_pub("dr", &dr_state); // Publisher object for the dead reckoning state
 
 float nav_instr = 0; //Variable for nav steer instructions
 
@@ -44,6 +47,10 @@ long l_diff;
 int numTimeSteps = 0;
 float averageTimeStep = 0;
 int n = 0;
+
+// Dead reckoning: estimated x and y
+double dr_x;
+double dr_y;
 
 //Watchdog
 #define WDI 42
@@ -127,21 +134,26 @@ void setup()
   int data_size = 12;
   int gps_state_data_size = 12;
   int pid_data_size = 6;
+  int dr_data_size = 2;
   nh.subscribe(nav_sub);
   bike_state.data_length = data_size;
-  gps_state.data_length = gps_state_data_size;
-  pid_controller_data.data_length = pid_data_size;
   bike_state.layout.data_offset = 0;
+  gps_state.data_length = gps_state_data_size;
   gps_state.layout.data_offset = 0;
-  pid_controller_data.layout.data_offset = 0;
+  //pid_controller_data.data_length = pid_data_size;
+  //pid_controller_data.layout.data_offset = 0;
+  dr_state.data_length = 2;
+  dr_state.layout.data_offset = 0;
 
   
   bike_state.layout.dim = (std_msgs::MultiArrayDimension *)
                           malloc(sizeof(std_msgs::MultiArrayDimension) * data_size); //Allocate memory for the bike_state layout
   gps_state.layout.dim = (std_msgs::MultiArrayDimension *)
                          malloc(sizeof(std_msgs::MultiArrayDimension) * data_size); //Allocate memory for the gps_state layout
-  pid_controller_data.layout.dim = (std_msgs::MultiArrayDimension *)
-      malloc(sizeof(std_msgs::MultiArrayDimension) * pid_data_size); // Allocate memory for the pid_controller_data layout
+  //pid_controller_data.layout.dim = (std_msgs::MultiArrayDimension *)
+  //    malloc(sizeof(std_msgs::MultiArrayDimension) * pid_data_size); // Allocate memory for the pid_controller_data layout
+  dr_state.layout.dim = (std_msgs::MultiArrayDimension *)
+      malloc(sizeof(std_msgs::MultiArrayDimension) * 2); // Allocate memory for the pid_controller_data layout
 
   bike_state.layout.dim[0].label = "desired_vel";
   bike_state.layout.dim[1].label = "current_vel";
@@ -149,22 +161,27 @@ void setup()
   bike_state.layout.dim[3].label = "imu_angle";
   bike_state.layout.dim[4].label = "encoder_position";
   bike_state.layout.dim[5].label = "desired_steer";
-
+/*
   pid_controller_data.layout.dim[0].label = "current_pos";
   pid_controller_data.layout.dim[1].label = "desired_pos";
   pid_controller_data.layout.dim[2].label = "current_vel";
   pid_controller_data.layout.dim[3].label = "sp_error";
   pid_controller_data.layout.dim[4].label = "sv_error";
   pid_controller_data.layout.dim[5].label = "total_error";
+*/
+  dr_state.layout.dim[0].label = "x";
+  dr_state.layout.dim[1].label = "y";
 
   //Allocate memory for the outgoing data
   bike_state.data = (float *)malloc(sizeof(float) * data_size);
   gps_state.data = (float *)malloc(sizeof(float) * gps_state_data_size);
-  pid_controller_data.data = (float *)malloc(sizeof(float) * pid_data_size);
+  //pid_controller_data.data = (float *)malloc(sizeof(float) * pid_data_size);
+  dr_state.data = (float *)malloc(sizeof(float) * 2);
 
   nh.advertise(state_pub);
   nh.advertise(gps_pub);
-  nh.advertise(pid_pub);
+  //nh.advertise(pid_pub);
+  nh.advertise(dr_pub);
 
   timer_start = 0;
   timer_start2 = 0;
@@ -246,7 +263,7 @@ void setup()
   digitalWrite(reverse_pin, HIGH); //when high the motor goes forward
   float voltage = analogRead(63) / 14.2 * pwm / 180;
   analogWrite(PWM_rear, pwm);
-  attachInterrupt(digitalPinToInterrupt(hall_pin), getPeriod, RISING); //Interrupt
+  attachInterrupt(digitalPinToInterrupt(hall_pin), handleRWInterrupt, RISING); //Interrupt
 
 
   // initializes pins for the landing gear relay switch
@@ -298,6 +315,15 @@ void loop() {
   float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
   //Serial.println("Got current velocity");
 
+  /////////////////////
+  // DEAD RECKONING
+
+  // There are 28 hall sensors. This gives us distance covered, in meters
+  dr_x += rwTickCount / 28.0 * R_WHL_CIRCUMFERENCE;
+  rwTickCount = 0;
+  dr_state.data[0] = dr_x;
+  dr_state.data[1] = dr_y;
+
   // Do not change bike_state indexes - some of them are hard-coded into
   // the nav algorithm
   bike_state.data[0] = current_vel; //front motor (rad/s)
@@ -340,7 +366,8 @@ void loop() {
   //Publish address of bike,gps state objects for ROS
   gps_pub.publish( &gps_state );
   state_pub.publish( &bike_state );
-  pid_pub.publish( &pid_controller_data );
+  //pid_pub.publish( &pid_controller_data );
+  dr_pub.publish( &dr_state );
   //Serial.println("published");
   nh.spinOnce();
   prev_millis = curr_millis;

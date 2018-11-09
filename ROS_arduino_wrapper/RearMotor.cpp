@@ -6,10 +6,9 @@
 float rear_pwm = 0; //current pwm value
 double speed = 0; //speed in rev/s
 boolean forward = true; //if False, is running in reverse
+int rwTickCount = 0; // Tick count, from rear wheel
 //Variables for calculating rear motor speed
-float tOld = 0; //first time reading
 float tNew = 0; //second time reading
-double T = 0;
 
 //Rear motor controller variable
 float gain_p = 5;
@@ -59,13 +58,24 @@ void switchDirection(boolean forward) {
   }
 }
 
-void getPeriod() {
+/*
+ * Used to obtain the speed of the rear wheel
+ * Called every time we get a rising edge from the Hall sensor
+ */
+void handleRWInterrupt() {
+
+  // Increment tick count
+  rwTickCount++;
+
+  // Find interval (in microseconds) since last interrupt
   float tOld = tNew;
   tNew = micros();
   double T = (tNew - tOld);
-  if ((1.2446) * (1E6) / (28 * T) < 100) {
-    //1.2446 is the Circumfrence of the wheel in meters
-    //multiplying the denominator by 28 (for the 28 hall sensors), gives us a denominator of s/rev (not s/ (1/28*rev))
-    speed = (1.2446) * (1E6) / (28 * T) ;
+  
+  //1.2446 is the Circumfrence of the wheel in meters
+  //multiplying the denominator by 28 (for the 28 hall sensors), gives us a denominator of s/rev (not s/ (1/28*rev))
+  double possibleSpeed = (1.2446) * (1E6) / (28 * T);
+  if (possibleSpeed < 100) {
+    speed = possibleSpeed;
   }
 }
