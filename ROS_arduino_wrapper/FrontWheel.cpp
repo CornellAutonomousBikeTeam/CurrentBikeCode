@@ -118,7 +118,7 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   // Maximium motor output magnitude should be 100
   if(motor_output > 100) {
     motor_output = 100;
-  //This maybe should be increased to 255 with the repaired front motor 10.10.17
+  //This maybe should be increased to 255 with the repaired front motor 2017-10-10
   }
 
   // Write to the motor

@@ -87,15 +87,8 @@ void navOrRC() {
   if (nav_mode) {
       desired_steer = nav_instr;
       desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
-      rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
-      if (rear_pwm > 180) {
-        rear_pwm = 180;
-      }
-      if (rear_pwm < 60) {
-        rear_pwm = 60;
-      }
+      rear_pwm = constrain((int)(gain_p * (desired_speed - speed) + rear_pwm), 60, 180); //Actual Controller
       foreward_speed = rear_pwm;
-      SerialUSB.println("Nav mode");
     }
     else { 
       foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
@@ -104,9 +97,7 @@ void navOrRC() {
       desired_lean = (desired_speed*desired_speed/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
      // desired_lean = (speed*speed)*desired_steer; //phi_d = (v^2/l/g) * delta_d
      // desired_lean = (gps_state.data[8]*gps_state.data[8]/10.0)*desired_steer; //phi_d = (v^2/l/g) * delta_d
-      SerialUSB.println("RC mode");
     }
-
 }
 
 
@@ -319,7 +310,7 @@ void loop() {
   // DEAD RECKONING
 
   // There are 28 hall sensors. This gives us distance covered, in meters
-  dr_x += rwTickCount / 28.0 * R_WHL_CIRCUMFERENCE;
+  dr_x += rwTickCount / 28.0 * R_WHL_CIRCUMFERENCE; // constant is defined in RearMotor.h
   rwTickCount = 0;
   dr_state.data[0] = dr_x;
   dr_state.data[1] = dr_y;
