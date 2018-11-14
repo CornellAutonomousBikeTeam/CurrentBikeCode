@@ -1,6 +1,7 @@
 #include <ros.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
+#include <std_srvs/Empty.h>
 #include "TinyGPS++.h"
 TinyGPSPlus gps;
 #include "IMU.h"
@@ -20,22 +21,30 @@ int bits_so_far = 0;
 //ros::NodeHandle  nh;
 ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh;
 
-// Definitions for ROS topics
+// Datatypes for our publishers
 std_msgs::Float32MultiArray bike_state; //Array containing bike state variables
 std_msgs::Float32MultiArray gps_state; //Array containing gps state variables
 std_msgs::Float32MultiArray dr_state; // Array containing dead reckoning state variables
+
+// ROS publishers
 ros::Publisher state_pub("bike_state", &bike_state); //Publisher object for the bike state
 ros::Publisher gps_pub("gps", &gps_state); //Publisher object for the gps state
 //ros::Publisher pid_pub("pid", &pid_controller_data); // Publisher object for the pid controller debug variables
 ros::Publisher dr_pub("dr", &dr_state); // Publisher object for the dead reckoning state
 
-float nav_instr = 0; //Variable for nav steer instructions
-
-//Ros listener
+// Navigation instruction subscriber
+float nav_instr = 0; // Holds the received instruction (steer angle)
 void updateInstruction(const std_msgs::Float32& data) {nav_instr = data.data;} //Update nav_instr var with nav algo data
-uint32_t queue_size = 3000; 
 ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction);
 
+// Dead reckoning: estimated x, y, and heading
+double dr_x;
+double dr_y;
+double dr_heading;
+
+// Dead reckoning reset service
+void resetDR(const std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) { dr_x = 0; dr_y = 0; dr_heading = 0; }
+ros::ServiceServer<std_srvs::Empty::Request, std_srvs::Empty::Response> dr_rst_server("dr_rst", &resetDR);
 
 boolean CH1, CH2, CH3, CH4, CH5, CH6; //current cycle's logic
 
@@ -47,10 +56,6 @@ long l_diff;
 int numTimeSteps = 0;
 float averageTimeStep = 0;
 int n = 0;
-
-// Dead reckoning: estimated x and y
-double dr_x;
-double dr_y;
 
 //Watchdog
 #define WDI 42
@@ -125,18 +130,18 @@ void setup()
   int data_size = 12;
   int gps_state_data_size = 12;
   int pid_data_size = 6;
-  int dr_data_size = 2;
+  int dr_data_size = 3;
   nh.subscribe(nav_sub);
+  nh.advertiseService(dr_rst_server);
   bike_state.data_length = data_size;
   bike_state.layout.data_offset = 0;
   gps_state.data_length = gps_state_data_size;
   gps_state.layout.data_offset = 0;
   //pid_controller_data.data_length = pid_data_size;
   //pid_controller_data.layout.data_offset = 0;
-  dr_state.data_length = 2;
+  dr_state.data_length = dr_data_size;
   dr_state.layout.data_offset = 0;
 
-  
   bike_state.layout.dim = (std_msgs::MultiArrayDimension *)
                           malloc(sizeof(std_msgs::MultiArrayDimension) * data_size); //Allocate memory for the bike_state layout
   gps_state.layout.dim = (std_msgs::MultiArrayDimension *)
@@ -144,7 +149,7 @@ void setup()
   //pid_controller_data.layout.dim = (std_msgs::MultiArrayDimension *)
   //    malloc(sizeof(std_msgs::MultiArrayDimension) * pid_data_size); // Allocate memory for the pid_controller_data layout
   dr_state.layout.dim = (std_msgs::MultiArrayDimension *)
-      malloc(sizeof(std_msgs::MultiArrayDimension) * 2); // Allocate memory for the pid_controller_data layout
+      malloc(sizeof(std_msgs::MultiArrayDimension) * dr_data_size); // Allocate memory for the pid_controller_data layout
 
   bike_state.layout.dim[0].label = "desired_vel";
   bike_state.layout.dim[1].label = "current_vel";
@@ -162,12 +167,13 @@ void setup()
 */
   dr_state.layout.dim[0].label = "x";
   dr_state.layout.dim[1].label = "y";
+  dr_state.layout.dim[2].label = "heading";
 
   //Allocate memory for the outgoing data
   bike_state.data = (float *)malloc(sizeof(float) * data_size);
   gps_state.data = (float *)malloc(sizeof(float) * gps_state_data_size);
   //pid_controller_data.data = (float *)malloc(sizeof(float) * pid_data_size);
-  dr_state.data = (float *)malloc(sizeof(float) * 2);
+  dr_state.data = (float *)malloc(sizeof(float) * dr_data_size);
 
   nh.advertise(state_pub);
   nh.advertise(gps_pub);
@@ -310,10 +316,16 @@ void loop() {
   // DEAD RECKONING
 
   // There are 28 hall sensors. This gives us distance covered, in meters
-  dr_x += rwTickCount / 28.0 * R_WHL_CIRCUMFERENCE; // constant is defined in RearMotor.h
+  float dist_traveled = rwTickCount / 28.0 * R_WHL_CIRCUMFERENCE; // constant is defined in RearMotor.h
   rwTickCount = 0;
+  float heading_change = current_vel * encoder_position / (1.02 * cos(imu_data.roll_angle));
+  dr_heading += heading_change;
+  dr_x += dist_traveled * cos(dr_heading);
+  dr_y += dist_traveled * sin(dr_heading);
+  
   dr_state.data[0] = dr_x;
   dr_state.data[1] = dr_y;
+  dr_state.data[2] = dr_heading;
 
   // Do not change bike_state indexes - some of them are hard-coded into
   // the nav algorithm
