@@ -71,7 +71,7 @@ float eulerIntegrate(float, float);
  * also calls PID_Controller (from PID.cpp), which sends the actual PWM
  * signal to the front wheel.
  */
-float frontWheelControl(float, float);
+float frontWheelControl(float, float, float);
 
 /* Function that returns desired angular velocity of front wheel */
 float balanceController(float, float, float );
@@ -82,4 +82,3 @@ float balanceController(float, float, float );
 //Try out different gains off ground for holding position (stationary testing)
 //Try out different gains ON ground (max 45 minutes) (step input)
 //if failed, try different gains OFF ground, tune (step input)
-

@@ -68,7 +68,7 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   //write PID controller based off of error signal received from encoder
   //P term
   //calculate position error (rad)
-  float pos_error = desired_pos - current_pos ;
+  float pos_error = desired_pos + current_pos ;
   pid_controller_data[1] = desired_pos;
 
   //scaled positional error
@@ -132,7 +132,42 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
  */
 float eulerIntegrate(float desiredVelocity, float current_pos) {
   float desiredPosition = current_pos + desiredVelocity * ((float)interval / 1000000.0) ;
-  return desiredPosition;
+  return desiredPosition; 
+}
+
+float squareWave(float t, float amplitude, float period)
+{
+  int mode = (int) (t / (period / 2));
+  int sign = (mode % 2 == 0) ? 1 : -1;
+  return amplitude * sign;
+}
+
+float triangleAscending(float t, float amplitude, float period)
+{
+  float slope = 4 * amplitude / period;
+  float intercept = -1 * amplitude;
+  return (slope * t) + intercept;
+}
+
+float triangleDescending(float t, float amplitude, float period)
+{
+  float slope = -4 * amplitude / period;
+  float intercept = 3 * amplitude;
+  return (slope * t) + intercept;
+}
+
+float triangleWave(float t, float amplitude, float period)
+{
+  int mode = (int) (t / (period / 2));
+  boolean ascending = (mode % 2 == 0);
+  float val = fmodf(t, period);
+  return ascending ? triangleAscending(val, amplitude, period) : triangleDescending(val, amplitude, period);
+}
+
+float sineWave(float t, float amplitude, float period)
+{
+  float b = (2 * M_PI) / period;
+  return amplitude * sin( b * t );
 }
 
 /*
@@ -141,7 +176,7 @@ float eulerIntegrate(float desiredVelocity, float current_pos) {
  * also calls PID_Controller (from PID.cpp), which sends the actual PWM
  * signal to the front wheel.
  */
-float frontWheelControl(float desiredVelocity, float current_pos) {
+float frontWheelControl(float desiredVelocity, float current_pos, float time) {
 
   // steer_contribution is a global variable, so we don't need to make
   // it a parameter of this function
@@ -153,7 +188,11 @@ float frontWheelControl(float desiredVelocity, float current_pos) {
   //    PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition);
   //    n++;
   //  }
+
+//  float desired_pos = squareWave(time, 1.0, 4000.0);
+
   float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
+  Serial.println("Desired_pos: " + String(desired_pos));
   //Serial.println(String(theo_position) + '\t' + String(desired_pos) + '\t' + String(current_pos)) ;
 
   /*
@@ -188,4 +227,3 @@ float balanceController(float roll_angle, float roll_rate, float encoder_angle) 
   }
   return desiredSteerRate;
 }
-

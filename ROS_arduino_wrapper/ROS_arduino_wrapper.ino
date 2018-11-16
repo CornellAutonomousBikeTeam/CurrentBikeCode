@@ -274,11 +274,13 @@ void setup()
 
   digitalWrite(LED_1, HIGH); //LED to signal setup function done
   nav_mode = true;
+
+  Serial.println("Time, Desired Steer Angle, Present Angle");
 }
 
 //Loop variables
 int blinkState = HIGH;
-void loop() {
+void loop() {  
   numTimeSteps++;
 
   navOrRC();
@@ -295,7 +297,8 @@ void loop() {
   //Serial.println("Got desired velocity");
   // frontWheelControl also calls a function that sends the PWM signal to the front motor
   // frontWheelControl will update the pid_controller_data.data array with new info
-  float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
+  float millitime = millis();
+  float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position, millitime); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
   //Serial.println("Got current velocity");
 
   // Do not change bike_state indexes - some of them are hard-coded into
@@ -362,8 +365,8 @@ void loop() {
     count = 0;
   }
   //SerialUSB.print("Nav_instr: ");Serial.println(nav_instr);
+
+  //For graphs later
+  //Serial.println(String(millis()) + ", " + String(desired_steer) +  ", " + String(encoder_position));
+  Serial.println("Current steer angle: " + String(encoder_position) + ", Desired steer angle: " + String(desired_steer));
 }
-
-
-
-
