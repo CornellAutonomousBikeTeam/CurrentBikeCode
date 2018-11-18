@@ -368,5 +368,5 @@ void loop() {
 
   //For graphs later
   //Serial.println(String(millis()) + ", " + String(desired_steer) +  ", " + String(encoder_position));
-  Serial.println("Current steer angle: " + String(encoder_position) + ", Desired steer angle: " + String(desired_steer));
+  Serial.println(String(encoder_position) + " " + String(-des_pos));
 }

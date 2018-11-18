@@ -31,6 +31,8 @@ float desired_steer = 0;
 float desired_lean = 0;
 float desired_pos_array[250];
 float theo_position = 0;
+// temporary variable for plotting, TODO remove later
+float des_pos = 0;
 
 int maxfront_PWM = 110;
 
@@ -189,10 +191,9 @@ float frontWheelControl(float desiredVelocity, float current_pos, float time) {
   //    n++;
   //  }
 
-//  float desired_pos = squareWave(time, 1.0, 4000.0);
+  des_pos = squareWave(time, 1.0, 4000.0);
 
-  float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
-  Serial.println("Desired_pos: " + String(desired_pos));
+//  float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
   //Serial.println(String(theo_position) + '\t' + String(desired_pos) + '\t' + String(current_pos)) ;
 
   /*
@@ -205,7 +206,7 @@ float frontWheelControl(float desiredVelocity, float current_pos, float time) {
 
   // The PID_Controller function will actually rotate the front motor!
   float pid_controller_data_array[5];
-  float current_vel = PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition, pid_controller_data_array);
+  float current_vel = PID_Controller(des_pos, relativePos, x_offset, current_t, previous_t, oldPosition, pid_controller_data_array);
 
   // Copy data from the PID controller into the outgoing ROS topic structure
   for(int i = 0; i < 6; i++) {

@@ -11,7 +11,7 @@
 #define PWM_front 9
 #define DIR 46
 #define K_p 3000
-#define K_d -40
+#define K_d -60
 #define K_i 0
 
 extern const long interval;
@@ -49,6 +49,7 @@ extern float desired_steer;
 extern float desired_lean;
 extern float desired_pos_array[250];
 extern float theo_position;
+extern float des_pos;
 
 extern int maxfront_PWM; //Define max front wheel PWM
 
