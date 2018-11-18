@@ -17,8 +17,8 @@ int curr_millis = 0;
 int total_millis = 0;
 int bits_so_far = 0;
 
-//ros::NodeHandle  nh;
-ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500 
+ros::NodeHandle  nh;
+//ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500 
 
 std_msgs::Float32MultiArray bike_state; //Array containing bike state variables
 std_msgs::Float32MultiArray gps_state; //Array containing gps state variables
@@ -33,6 +33,13 @@ void updateInstruction(const std_msgs::Float32& data) {nav_instr = data.data;} /
 uint32_t queue_size = 3000; 
 ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &updateInstruction);
 
+// PID CONSTANT LISTENERS (ros_fw_X used in FrontWheel.cpp)
+void updateFwP(const std_msgs::Float32& data) { ros_fw_p = data.data; }
+void updateFwI(const std_msgs::Float32& data) { ros_fw_i = data.data; }
+void updateFwD(const std_msgs::Float32& data) { ros_fw_d = data.data; }
+ros::Subscriber<std_msgs::Float32> ros_fw_p_sub("fw_p", &updateFwP);
+ros::Subscriber<std_msgs::Float32> ros_fw_i_sub("fw_i", &updateFwI);
+ros::Subscriber<std_msgs::Float32> ros_fw_d_sub("fw_d", &updateFwD);
 
 boolean CH1, CH2, CH3, CH4, CH5, CH6; //current cycle's logic
 
@@ -124,10 +131,15 @@ int velocityToPWM (float desiredVelocity) {
 void setup()
 {
   nh.initNode();
+  
+  //nh.subscribe(nav_sub);
+  nh.subscribe(ros_fw_p_sub);
+  //nh.subscribe(ros_fw_i_sub);
+  nh.subscribe(ros_fw_d_sub);
+  
   int data_size = 12;
   int gps_state_data_size = 12;
   int pid_data_size = 6;
-  nh.subscribe(nav_sub);
   bike_state.data_length = data_size;
   gps_state.data_length = gps_state_data_size;
   pid_controller_data.data_length = pid_data_size;

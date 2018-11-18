@@ -36,6 +36,11 @@ float des_pos = 0;
 
 int maxfront_PWM = 110;
 
+// Front wheel constants, via ROS
+float ros_fw_p;
+float ros_fw_i;
+float ros_fw_d;
+
 const int k1 = 70; //phi = lean
 const int k2 = 10; //was previously 21 //phidot=lean rate
 const int k3 = -20; //delta=steer
@@ -77,7 +82,7 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   //position scaling factor K_p = 100/(M_PI/2) found by taking 100 (100 being max pwm value I want to reach), 
   //and dividing by theoretical max absolute value of angle (Pi/2). 
   //This means with angles in that range, 100 will be the max PWM value outputted to the motor
-  float sp_error =  (K_p*pos_error);
+  float sp_error =  (ros_fw_p*pos_error);
   pid_controller_data[3] = sp_error;
 
   //D term
@@ -92,7 +97,7 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   // the value of the velocity error will be negative of the current velocity (in order to resist current direction of motion). 
   //Calculated as target_velocity - current_velocity where target velocity is always 0
   //scaled velocity error
-  float sv_error =  (-K_d*current_vel)  ;  
+  float sv_error =  (-ros_fw_d*current_vel)  ;  
   pid_controller_data[4] = sv_error;
 
   float total_error =  sp_error + sv_error ;

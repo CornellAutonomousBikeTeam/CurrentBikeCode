@@ -53,6 +53,11 @@ extern float des_pos;
 
 extern int maxfront_PWM; //Define max front wheel PWM
 
+// Front wheel constants, via ROS
+extern float ros_fw_p;
+extern float ros_fw_i;
+extern float ros_fw_d;
+
 //Balance Control constants
 extern const int k1; //phi = lean
 extern const int k2; //was previously 21 //phidot=lean rate
