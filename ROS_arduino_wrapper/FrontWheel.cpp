@@ -37,9 +37,9 @@ float des_pos = 0;
 int maxfront_PWM = 110;
 
 // Front wheel constants, via ROS
-float ros_fw_p;
-float ros_fw_i;
-float ros_fw_d;
+float ros_fw_p = 3000;
+float ros_fw_i = 0;
+float ros_fw_d = -40;
 
 const int k1 = 70; //phi = lean
 const int k2 = 10; //was previously 21 //phidot=lean rate
@@ -75,7 +75,7 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   //write PID controller based off of error signal received from encoder
   //P term
   //calculate position error (rad)
-  float pos_error = desired_pos + current_pos ;
+  float pos_error = desired_pos - current_pos ;
   pid_controller_data[1] = desired_pos;
 
   //scaled positional error
@@ -188,6 +188,7 @@ float frontWheelControl(float desiredVelocity, float current_pos, float time) {
   // steer_contribution is a global variable, so we don't need to make
   // it a parameter of this function
 
+  Serial.println("Desired Velocity: " + String(desiredVelocity));
   unsigned long current_t = micros();
 
   //  if (n == 0) {
@@ -196,7 +197,7 @@ float frontWheelControl(float desiredVelocity, float current_pos, float time) {
   //    n++;
   //  }
 
-  des_pos = squareWave(time, 1.0, 4000.0);
+  des_pos = 0;
 
 //  float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
   //Serial.println(String(theo_position) + '\t' + String(desired_pos) + '\t' + String(current_pos)) ;
