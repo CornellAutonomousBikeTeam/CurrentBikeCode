@@ -5,28 +5,25 @@
 /*Variables*/
 extern signed int relativePos; //Read the relative position of the encoder
 extern signed int indexValue; //Read the index value (Z channel) of the encoder
-extern const int quad_A;
-extern const int quad_B;
-extern const int idx;
-extern const unsigned int mask_quad_A;
-extern const unsigned int mask_quad_B;
-extern const unsigned int mask_idx;
-extern int REnot;
-extern int DE;
-extern signed int oldPosition;
-extern signed int oldIndex;
-extern unsigned long previous_t;
-extern signed int x_offset;
-extern float desired_pos;
-extern float current_pos;
-extern float current_vel;
-extern float desired_vel;
-extern float vel_error;
-extern float pos_error;
-extern float PID_output;
-extern float sp_error;
-extern float sv_error;
-extern int pwm;
+extern const int quad_A; //Used to assign mask_quad_A
+extern const int quad_B; //Used to assign mask_quad_B
+extern const int idx; //Used to assign mask_idx
+extern const unsigned int mask_quad_A; //Used to activate peripheral function for the quad pin it's assigned to
+extern const unsigned int mask_quad_B;//Used to activate peripheral function for the quad pin it's assigned to
+extern const unsigned int mask_idx; //Used to activate peripheral function for the quad pin it's assigned to
+extern int REnot; //Pin used by encoder 
+extern int DE; //Pin used by encoder 
+extern signed int oldPosition; //Used by front wheel
+extern signed int oldIndex; //Used in the front wheel calibration loop in the main file
+extern unsigned long previous_t; //Used by front wheel
+extern signed int x_offset; //Where the front tick is with respect to the absolute position of the encoder A and B channels
+extern float desired_pos; //Used by PID controller
+extern float current_pos; //Used to update encoder position
+extern float current_vel; //Holds desired velocity but modified to match sign convention
+extern float pos_error; //Used to calculate position error for PID
+extern float sp_error; //Used in scaled positional error for PID
+extern float sv_error; //Used in scaled velocity error for PID
+extern int pwm; //PWM for front motor
 
 
 /*Functions*/

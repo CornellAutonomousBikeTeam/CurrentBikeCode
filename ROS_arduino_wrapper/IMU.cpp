@@ -53,63 +53,8 @@ void initIMU(void){
   //Initialize serial
   Serial1.begin(115200);
 }
-/*
-  SPI.transfer(0x50); //set streaming slots
-  delay(1);
-  SPI.transfer(0x01); //get tared euler angles command
-  SPI.transfer(0xFF); //don't care
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0xFF);
-  SPI.transfer(0x52);
-  delay(1);
-*/
-//  //Check
-//  unsigned int Result = SPI.transfer(0x51); //get streaming slots
-//  Serial.println(Result);
-//  
-////
-////  SPI.transfer(0x52); //set streaming timing
-////  SPI.transfer(10000); //streaming interval ÂµS
-////  SPI.transfer(0xFFFFFFFF, 4); //streaming duration
-////  SPI.transfer(500);//Delay ÂµS
-//
-//  //check timing 
-//  unsigned int Result2 = SPI.transfer(0x53);
-//  Serial.println(Result2);
-//
-//  SPI.transfer(0x55);//start streaming
-//  
-//  return;
-//}
-///////////////////////////////////////////////////////////////////////////////////////
 
 /*getIMU*/
-/////////////////////////////////////////////////////////////////////////////////////
-//float getIMU(byte commandToWrite){
-//  for (int ii=0; ii<3; ii++) {
-//    for (int jj=0; jj<4; jj++) {
-//      data[ii].b[jj] =  SPI_RDR; //read and store data directly from spi received data register
-//    }
-// } 
-//  byte data = B00000000;
-//  for (int i=0; i<8; i++) {
-//   byte bit0 = digitalRead(74);
-//        data = data | bit0;
-//           data << 1;
-//        
-//
-//  for( int mm=0; mm<3; mm++) {
-//    endianSwap(data[mm].b);
-//  }
-//
-//  return data;
-//     
-//}
-
 float getIMU(byte commandToWrite, int x){
 
     //SPI.beginTransaction(settings);
@@ -167,7 +112,6 @@ float getIMU(byte commandToWrite, int x){
   }
 }
 
-/* Retrieve data from IMU about roll angle and rate and return it */
 struct roll_t updateIMUData() {
   roll_t roll_data;
 
@@ -179,56 +123,6 @@ struct roll_t updateIMUData() {
   roll_data.roll_rate = roll_rate;
   roll_data.yaw = yaw;
   return roll_data;
-}
-
-/* Read from buffer. Used up UpdateIMUSerial */
-void readBuffer(float dataArray[]) {
-  int i = 0;
-  String data;
-  while(Serial1.available()) {
-    if(Serial1.peek() == '\n') { //at end of response packet
-      Serial1.read();
-      if (i == 2) {
-        dataArray[i] = data.toFloat(); //if last value in data, since no comma at end
-      }
-    }
-    else {
-      char ch = Serial1.read();
-      if (ch == ',') { //delimiter between values
-        dataArray[i] = data.toFloat();
-        data = "";
-        i++;
-      }
-      else data += ch;
-    }
-  }
-}
-/* Jordan and Bobby's failed semester-long attempt at switching to serial*/
-void updateIMUDataSerial() {
-  Serial1.write(":1\n"); //send command to get euler angles for orientation
-  //Serial.println("Sent command for euler angles");
-  readBuffer(euler_angles); //parse the 3 euler angles and put them into an array
-
-  /*
-  From our tests 5 ms is the minimum delay we need to give the IMU a chance to
-  respond. At 4 ms or less we will get errors like "Lost sync with device"
-  and "Serial Port read returned short ..."
-  */
-  delay(5);
-  
-  //Serial.println("Sent command for gyro");
-  Serial1.write(":38\n"); //send command to get gyro rate
-  readBuffer(gyro_rate); //parse the 3 gyro rates and put them into an array
-  
-  imu_data.roll_angle = euler_angles[2];
-  imu_data.yaw = euler_angles[1];
-  imu_data.roll_rate = gyro_rate[2];
-  //Serial.print("Roll angle: ");
-  //Serial.println(imu_data.roll_angle, 10);
-  //Serial.print("Roll rate: ");
-  //Serial.println(gyro_rate[2], 10);
-  //Serial.print("Yaw: ");
-  //Serial.println(imu_data.yaw, 10);
 }
 
 

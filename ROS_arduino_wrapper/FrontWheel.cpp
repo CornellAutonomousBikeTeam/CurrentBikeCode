@@ -2,60 +2,20 @@
 #include <math.h>
 
 /*Variables*/
-const long interval = 10000; //timed loop interval
+const long interval = 10000;
 std_msgs::Float32MultiArray pid_controller_data;
 int steer_dir = 0;
 
-int duration_CH1;
-int duration_CH2;
-int duration_CH3;
-int duration_CH4;
-int duration_CH5;
-int duration_CH6;
-
-int start_CH1;
-int start_CH2; 
-int start_CH3;
-int start_CH4;
-int start_CH5;
-int start_CH6;
-
-int end_CH1;
-int end_CH2; 
-int end_CH3;
-int end_CH4;
-int end_CH5;
-int end_CH6;
-
 float desired_steer = 0;
 float desired_lean = 0;
-float desired_pos_array[250];
-float theo_position = 0;
 
 int maxfront_PWM = 110;
 
-const int k1 = 70; //phi = lean
-const int k2 = 10; //was previously 21 //phidot=lean rate
-const int k3 = -20; //delta=steer
+const int k1 = 70;
+const int k2 = 10; 
+const int k3 = -20; 
+
 /*Functions*/
-/*
- * Runs a PID controller to keep the front wheel at desired_pos.
- *
- * Some notes on the pid_controller_data array: It's allocated (or at
- * least defined) by the caller and used to return debug info. It
- * contains a number of intermediate results created while computing the
- * PWM output to send the front motor. Its individual elements are
- * assigned as follows:
- *
- * {
- *     current_pos,
- *     desired_pos,
- *     current_vel,
- *     sp_error,
- *     sv_error,
- *     total_error
- * }
- */
 float PID_Controller(float desired_pos, signed int x, signed int x_offset, 
   unsigned long current_t, unsigned long previous_t, signed int oldPosition,
   float *pid_controller_data) {
@@ -80,7 +40,6 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
 
   //D term
   //calculate velocity error
-//  unsigned long current_t = micros();
   float current_vel = (((((x-x_offset)-oldPosition)*0.02197*1000000*M_PI/180.0)/(current_t-previous_t)));   //Angular Speed(rad/s)
   pid_controller_data[2] = current_vel;
   
@@ -93,21 +52,13 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   float sv_error =  (-K_d*current_vel)  ;  
   pid_controller_data[4] = sv_error;
 
-  float total_error =  sp_error + sv_error ;
+  float total_error =  sp_error + sv_error; //Total error: scaled velocity and positional errors
   pid_controller_data[5] = total_error;
 
-  //print total error to get a sense of how high the values are for a normal sine wave.
+  if (total_error > 0) {digitalWrite(DIR, LOW);} //Direction of front wheel's rotation
+  else {digitalWrite(DIR, HIGH);}
 
-  // This pin sets the direction of the front wheel's rotation
-  if (total_error > 0) {
-    digitalWrite(DIR, LOW); 
-  } else {
-    digitalWrite(DIR, HIGH);
-  }
-
- //  Serial.println(String(current_pos) + "\t" + String(desired_pos) + "\t" + String(pos_error) + "\t" + String(total_error));
-
-  oldPosition = x-x_offset;
+  oldPosition = x-x_offset; 
 
   // Cast the output to the motor to an int
   int motor_output = (int)total_error;
@@ -126,43 +77,15 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   return current_vel;
 }
 
-/*
- * Takes in commanded velocity from balance controller, and converts
- * commanded velocity into commanded position
- */
 float eulerIntegrate(float desiredVelocity, float current_pos) {
   float desiredPosition = current_pos + desiredVelocity * ((float)interval / 1000000.0) ;
   return desiredPosition;
 }
 
-/*
- * Takes in desired position and applies a PID controller to minimize
- * error between current position and desired position. This function
- * also calls PID_Controller (from PID.cpp), which sends the actual PWM
- * signal to the front wheel.
- */
 float frontWheelControl(float desiredVelocity, float current_pos) {
 
-  // steer_contribution is a global variable, so we don't need to make
-  // it a parameter of this function
-
   unsigned long current_t = micros();
-
-  //  if (n == 0) {
-  //    float desired_pos = 0;
-  //    PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition);
-  //    n++;
-  //  }
   float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
-  //Serial.println(String(theo_position) + '\t' + String(desired_pos) + '\t' + String(current_pos)) ;
-
-  /*
-    if (Serial.available()){
-    desired_pos = M_PI / 180 * Serial.parseFloat();
-    }
-  */
-
-  //Serial.println(String(steer_contribution) + '\t' +  String(commanded_speed));
 
   // The PID_Controller function will actually rotate the front motor!
   float pid_controller_data_array[5];
@@ -176,7 +99,7 @@ float frontWheelControl(float desiredVelocity, float current_pos) {
   previous_t = current_t;
   oldPosition = relativePos - x_offset;
 }
-/* Function that returns desired angular velocity of front wheel */
+
 float balanceController(float roll_angle, float roll_rate, float encoder_angle) {
   float desiredSteerRate = k1 * (roll_angle - desired_lean) + k2 * roll_rate + 
     k3 * (encoder_angle - desired_steer);

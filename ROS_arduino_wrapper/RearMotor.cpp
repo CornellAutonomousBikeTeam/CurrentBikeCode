@@ -2,26 +2,17 @@
 
 /*Variables*/
 
-//Rear Motor Variables
-float rear_pwm = 0; //current pwm value
-double speed = 0; //speed in rev/s
-boolean forward = true; //if False, is running in reverse
-//Variables for calculating rear motor speed
-float tOld = 0; //first time reading
-float tNew = 0; //second time reading
-double T = 0;
+float rear_pwm = 0; 
+double speed = 0; 
+boolean forward = true; 
+float tOld = 0; 
+float tNew = 0;
+double T = 0; 
 
-//Rear motor controller variable
 float gain_p = 5;
-float desired_speed = 3; //(m/s)
+float desired_speed = 3; 
 
 
-
-/*
-   Method for setting rear motor at a certain PWM
-
-   @param newPWM- the new pwm value to ramp up to
-*/
 void rampToPWM(float newPWM, float rear_pwm) {
   
   while (rear_pwm < newPWM) { //Ramps up speed- Workaround for rear motor safety features
@@ -42,10 +33,6 @@ void rampToPWM(float newPWM, float rear_pwm) {
   }
 }
 
-
-/*
-   Switches direction of motor
-*/
 void switchDirection(boolean forward) {
  // Serial.println("entered method");
   if (forward) {

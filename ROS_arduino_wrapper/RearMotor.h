@@ -17,17 +17,20 @@ extern boolean forward; //if False, is running in reverse
 //Variables for calculating rear motor speed
 extern float tOld; //first time reading
 extern float tNew; //second time reading
-extern double T;
+extern double T; //holds difference between tOld and tNew
 
-//Rear motor controller variable
-extern float gain_p;
+//Rear motor controller variables
+extern float gain_p; //gain
 extern float desired_speed; //(m/s)
 
-/*Define functions*/
-//set speed
+/*
+   Method for setting rear motor at a certain PWM
+   @param newPWM- the new pwm value to ramp up to
+*/
 void rampToPWM(float, float);
-//change direction
+/* Switches direction of motor */
 void switchDirection(boolean);
+/* Calculates period of wheel turning */
 void getPeriod();
 
 #endif //RearMotor_h

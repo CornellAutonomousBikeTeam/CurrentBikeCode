@@ -8,47 +8,21 @@
 
 /*Define  variables*/
 //PID
-#define PWM_front 9
-#define DIR 46
 #define K_p 3000
 #define K_d -40
 #define K_i 0
 
-extern const long interval;
+extern const long interval; //Timed loop interval
 extern std_msgs::Float32MultiArray pid_controller_data; //Array containing pid controller debug variables
 
 //Front Motor
 #define PWM_front 9
 #define DIR 46
 
-extern int steer_dir;
+extern int steer_dir; 
 
-//timers for each channel
-extern int duration_CH1;
-extern int duration_CH2;
-extern int duration_CH3;
-extern int duration_CH4;
-extern int duration_CH5;
-extern int duration_CH6;
-
-extern int start_CH1;
-extern int start_CH2; 
-extern int start_CH3;
-extern int start_CH4;
-extern int start_CH5;
-extern int start_CH6;
-
-extern int end_CH1;
-extern int end_CH2; 
-extern int end_CH3;
-extern int end_CH4;
-extern int end_CH5;
-extern int end_CH6;
-
-extern float desired_steer;
-extern float desired_lean;
-extern float desired_pos_array[250];
-extern float theo_position;
+extern float desired_steer; //Steer we want to achieve (either from RC or nav instruction)
+extern float desired_lean; //Lean we want to achieve (either from RC or nav instruction)
 
 extern int maxfront_PWM; //Define max front wheel PWM
 
@@ -58,22 +32,44 @@ extern const int k2; //was previously 21 //phidot=lean rate
 extern const int k3; //delta=steer
 
 /*Define functions*/
+
+/*
+ * Runs a PID controller to keep the front wheel at desired_pos.
+ *
+ * Some notes on the pid_controller_data array: It's allocated (or at
+ * least defined) by the caller and used to return debug info. It
+ * contains a number of intermediate results created while computing the
+ * PWM output to send the front motor. Its individual elements are
+ * assigned as follows:
+ *
+ * {
+ *     current_pos,
+ *     desired_pos,
+ *     current_vel,
+ *     sp_error,
+ *     sv_error,
+ *     total_error
+ * }
+ */
 float PID_Controller(float, signed int, signed int, 
   unsigned long, unsigned long, signed int, float *);
+
+  
 /*
  * Takes in commanded velocity from balance controller, and converts
  * commanded velocity into commanded position
  */
 float eulerIntegrate(float, float);
-/*
- * Takes in desired position and applies a PID controller to minimize
+
+/* Takes in desired position and applies a PID controller to minimize
  * error between current position and desired position. This function
- * also calls PID_Controller (from PID.cpp), which sends the actual PWM
+ * also calls PID_Controller function, which sends the actual PWM
  * signal to the front wheel.
  */
 float frontWheelControl(float, float);
 
-/* Function that returns desired angular velocity of front wheel */
+/* Function that returns desired angular velocity of front wheel based on roll angle, 
+ *  roll rate (both from IMU) and encoder angle as well as desired lean and steer */
 float balanceController(float, float, float );
 
 #endif //PID_h
