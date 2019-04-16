@@ -22,9 +22,11 @@ ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> nh; //set this back to 500
 
 std_msgs::Float32MultiArray bike_state; //Array containing bike state variables
 std_msgs::Float32MultiArray gps_state; //Array containing gps state variables
+std_msgs::String nmea_state; // String containing NMEA sentence
 ros::Publisher state_pub("bike_state", &bike_state); //Publisher object for the bike state
 ros::Publisher gps_pub("gps", &gps_state); //Publisher object for the gps state
 ros::Publisher pid_pub("pid", &pid_controller_data); // Publisher object for the pid controller debug variables
+ros::Publisher nmea_pub("nmea", &nmea_state); // Publisher for NMEA sentences
 
 float nav_instr = 0; //Variable for nav steer instructions
 
@@ -142,6 +144,7 @@ void setup()
   nh.advertise(state_pub);
   nh.advertise(gps_pub);
   nh.advertise(pid_pub);
+  nh.advertise(nmea_pub);
 
   timer_start = 0;
   timer_start2 = 0;
@@ -297,6 +300,17 @@ void loop() {
     //Serial.print((char)Serial3.read());
     gps.encode(Serial3.read());
     Serial3.flush(); //WITHOUT THIS THE BUFFER WILL NOT BE ABLE TO BE READ AS FAST AS IT IS WRITTEN TO AND THIS WILL LOOP FOREVER
+
+    // Publish to /nmea ROS topic
+    if(incoming=='$'){
+      nmea_buffer[nmea_idx] = '\0';
+      nmea_state.data = nmea_buffer;
+      nmea_pub.publish( &nmea_state );
+      nmea_idx = 1;
+      nmea_buffer[0] = '$';
+    } else {
+      nmea_buffer[nmea_idx++] = incoming;
+    }
     //Serial.println(gps.location.isUpdated());
   }
   //Serial.print("Lat: ");Serial.println(gps.location.lat());
