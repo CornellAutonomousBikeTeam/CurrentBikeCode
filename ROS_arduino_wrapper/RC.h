@@ -19,7 +19,7 @@ extern volatile int last_interrupt_time2; //calcSignal2 is the interrupt handler
 extern volatile int last_interrupt_time5; //calcSignal5 is the interrupt handler
 extern volatile int last_interrupt_time6; //calcSignal6 is the interrupt handler
 extern volatile float steer_range; //Used to map signal received to a steer angle
-extern volatile float foreward_speed; //Used to map signal received to a rear wheel speed
+extern volatile float forward_speed; //Used to map signal received to a rear wheel speed
 extern volatile float pulse_time; //Used in calcSignal1
 extern volatile float pulse_time2; //Used in calcSignal2
 extern volatile float pulse_time5; //Used in calcSignal5
@@ -37,4 +37,3 @@ void calcSignal6();
 
 
 #endif //RC_h
-

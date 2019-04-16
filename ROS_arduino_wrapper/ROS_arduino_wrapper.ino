@@ -74,11 +74,11 @@ void navOrRC() {
       rear_pwm = 60; //Min PWM value that bike can do, regardless of what nav algo wants to say
     }
 
-    foreward_speed = rear_pwm;
+    forward_speed = rear_pwm;
     SerialUSB.println("Nav mode");
   }
   else {
-    foreward_speed = map(pulse_time2, 1100, 1900, 0, 200);
+    forward_speed = map(pulse_time2, 1100, 1900, 0, 200);
     steer_range = map(pulse_time, 1100, 1900, 60, -60);
     desired_steer = steer_range * .01 ;
     desired_lean = (desired_speed * desired_speed / 10.0) * desired_steer; //phi_d = (v^2/l/g) * delta_d
@@ -211,7 +211,7 @@ void loop() {
 
   navOrRC();
 
-  analogWrite(PWM_rear, foreward_speed);
+  analogWrite(PWM_rear, forward_speed);
 
   l_start = micros();
 
@@ -226,7 +226,7 @@ void loop() {
   float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
   //Serial.println("Got current velocity");
 
-  rosPublishBikeState(current_vel, desiredVelocity, encoder_position, desired_steer, imu_data.roll_rate, imu_data.roll_angle, speed, foreward_speed, battery_voltage, imu_data.yaw);
+  rosPublishBikeState(current_vel, desiredVelocity, encoder_position, desired_steer, imu_data.roll_rate, imu_data.roll_angle, speed, forward_speed, battery_voltage, imu_data.yaw);
 
   char incoming;
   while (Serial3.available()) {
@@ -260,8 +260,10 @@ void loop() {
   }
 
   //Serial.println("roll angle: " + String(imu_data.roll_angle) + " roll rate: " + String(imu_data.roll_rate) + " encoder: " + String(encoder_position));
-  SerialUSB.println("Pulse 1: " + String(pulse_time) + " Pulse 2: " + String(pulse_time2) + " Pulse 5: " + String(pulse_time5) + " Pulse 6: " + String(pulse_time6));
-  SerialUSB.println(speed);
+  //SerialUSB.println("Pulse 1: " + String(pulse_time) + " Pulse 2: " + String(pulse_time2) + " Pulse 5: " + String(pulse_time5) + " Pulse 6: " + String(pulse_time6));
+  //SerialUSB.println(speed);
+
+  rosSpinOnce();
 
   total_millis = total_millis + (curr_millis - prev_millis);
   count += 1;

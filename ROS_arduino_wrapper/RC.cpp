@@ -11,7 +11,7 @@ volatile int last_interrupt_time2;
 volatile int last_interrupt_time5; 
 volatile int last_interrupt_time6; 
 volatile float steer_range ; 
-volatile float foreward_speed ; 
+volatile float forward_speed ; 
 volatile float pulse_time ; 
 volatile float pulse_time2 ; 
 volatile float pulse_time5 ; 
