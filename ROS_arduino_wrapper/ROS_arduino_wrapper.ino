@@ -240,6 +240,8 @@ void setup()
     analogWrite(PWM_front,50);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");
+    nh.loginfo((String(REG_TC0_CV0) + '\t' + y).c_str());
+    delay(40);
     }
 
   x_offset = REG_TC0_CV0;   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
@@ -341,7 +343,3 @@ void loop() {
   }
   //SerialUSB.print("Nav_instr: ");Serial.println(nav_instr);
 }
-
-
-
-
