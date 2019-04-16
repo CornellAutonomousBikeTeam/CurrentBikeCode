@@ -3,7 +3,7 @@
 
 /*Variables*/
 const long interval = 10000;
-std_msgs::Float32MultiArray pid_controller_data;
+float pid_controller_data_array[5];
 int steer_dir = 0;
 
 float desired_steer = 0;
@@ -88,13 +88,7 @@ float frontWheelControl(float desiredVelocity, float current_pos) {
   float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
 
   // The PID_Controller function will actually rotate the front motor!
-  float pid_controller_data_array[5];
   float current_vel = PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition, pid_controller_data_array);
-
-  // Copy data from the PID controller into the outgoing ROS topic structure
-  for(int i = 0; i < 6; i++) {
-    pid_controller_data.data[i] = pid_controller_data_array[i];
-  }
 
   previous_t = current_t;
   oldPosition = relativePos - x_offset;
@@ -111,4 +105,3 @@ float balanceController(float roll_angle, float roll_rate, float encoder_angle) 
   }
   return desiredSteerRate;
 }
-

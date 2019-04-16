@@ -3,7 +3,6 @@
 
 #include <SPI.h>
 #include <math.h>
-#include <std_msgs/Float32MultiArray.h>
 #include "Encoder.h"
 
 /*Define  variables*/
@@ -13,7 +12,7 @@
 #define K_i 0
 
 extern const long interval; //Timed loop interval
-extern std_msgs::Float32MultiArray pid_controller_data; //Array containing pid controller debug variables
+extern float pid_controller_data_array[5];
 
 //Front Motor
 #define PWM_front 9
@@ -78,4 +77,3 @@ float balanceController(float, float, float );
 //Try out different gains off ground for holding position (stationary testing)
 //Try out different gains ON ground (max 45 minutes) (step input)
 //if failed, try different gains OFF ground, tune (step input)
-
