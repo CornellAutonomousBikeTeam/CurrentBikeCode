@@ -7,8 +7,8 @@
 
 /*Define  variables*/
 //PID
-#define K_p 3000
-#define K_d -40
+#define K_p 800
+#define K_d -3500
 #define K_i 0
 
 extern const long interval; //Timed loop interval
@@ -29,6 +29,7 @@ extern int maxfront_PWM; //Define max front wheel PWM
 extern const int k1; //phi = lean
 extern const int k2; //was previously 21 //phidot=lean rate
 extern const int k3; //delta=steer
+extern const int k4; // lmao
 
 /*Define functions*/
 
@@ -71,7 +72,7 @@ float frontWheelControl(float, float);
 
 /* Function that returns desired angular velocity of front wheel based on roll angle, 
  *  roll rate (both from IMU) and encoder angle as well as desired lean and steer */
-float balanceController(float, float, float );
+float balanceController(float, float, float, long );
 
 #endif //PID_h
 

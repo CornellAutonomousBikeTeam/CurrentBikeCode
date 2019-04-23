@@ -14,6 +14,10 @@ int maxfront_PWM = 110;
 const int k1 = 70;
 const int k2 = 10; 
 const int k3 = -20; 
+const int k4 = -10;
+
+float last_error = 0;
+float last_angle_error = 0;
 
 /*Functions*/
 
@@ -62,8 +66,8 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
 
   //D term
   //calculate velocity error
-  float current_vel = (((((x-x_offset)-oldPosition)*0.02197*1000000*M_PI/180.0)/(current_t-previous_t)));   //Angular Speed(rad/s)
-  pid_controller_data[2] = current_vel;
+  //float current_vel = (((((x-x_offset)-oldPosition)*0.02197*1000000*M_PI/180.0)/(current_t-previous_t)));   //Angular Speed(rad/s)
+  //pid_controller_data[2] = current_vel;
   
   //calculate the value of the current time step in microseconds
   //unsigned long delta_t = 2000;
@@ -71,11 +75,15 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   // the value of the velocity error will be negative of the current velocity (in order to resist current direction of motion). 
   //Calculated as target_velocity - current_velocity where target velocity is always 0
   //scaled velocity error
-  float sv_error =  (-K_d*current_vel)  ;  
-  pid_controller_data[4] = sv_error;
+  //float sv_error =  (-K_d*current_vel)  ;  
 
-  float total_error =  sp_error + sv_error; //Total error: scaled velocity and positional errors
-  pid_controller_data[5] = total_error;
+  // D term
+  float d_error = -K_d*((pos_error - last_error)/((current_t-previous_t)/1000));
+  if(abs(pos_error)<0.02)d_error=0;
+  last_error = pos_error;
+  Serial.println(String(sp_error)+'\t'+String(d_error));
+
+  float total_error = sp_error + d_error;
 
   oldPosition = x-x_offset; 
 
@@ -100,9 +108,11 @@ float frontWheelControl(float desiredVelocity, float current_pos) {
   oldPosition = relativePos - x_offset;
 }
 
-float balanceController(float roll_angle, float roll_rate, float encoder_angle) {
-  float desiredSteerRate = k1 * (roll_angle - desired_lean) + k2 * roll_rate + 
-    k3 * (encoder_angle - desired_steer);
+float balanceController(float roll_angle, float roll_rate, float encoder_angle, long time_diff_millis) {
+  float angle_error = encoder_angle - desired_steer;
+  float desiredSteerRate = k1 * (roll_angle - desired_lean) + k2 * roll_rate +
+    k3 * (encoder_angle - desired_steer) + k4 * ((angle_error - last_angle_error)/time_diff_millis);
+  last_angle_error = angle_error;
   if (desiredSteerRate > 10) {
     desiredSteerRate = 10;
   }

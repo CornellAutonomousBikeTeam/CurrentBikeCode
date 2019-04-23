@@ -219,11 +219,12 @@ void loop() {
   //Serial.println("Got encoder position");
   roll_t imu_data = updateIMUData();
   //Serial.println("Got IMU data");
-  float desiredVelocity = balanceController(((1) * (imu_data.roll_angle)), (1) * imu_data.roll_rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
+  float desiredVelocity = balanceController(((1) * (imu_data.roll_angle)), (1) * imu_data.roll_rate, encoder_position, curr_millis - prev_millis); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
+  set_front_motor_velocity((int)(-desiredVelocity*5));
   //Serial.println("Got desired velocity");
   // frontWheelControl also calls a function that sends the PWM signal to the front motor
   // frontWheelControl will update the pid_controller_data.data array with new info
-  float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
+  //float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
   //Serial.println("Got current velocity");
 
   rosPublishBikeState(current_vel, desiredVelocity, encoder_position, desired_steer, imu_data.roll_rate, imu_data.roll_angle, speed, forward_speed, battery_voltage, imu_data.yaw);
