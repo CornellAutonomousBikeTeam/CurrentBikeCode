@@ -1,4 +1,4 @@
-#include "FrontWheel.h"
+  #include "FrontWheel.h"
 #include <math.h>
 
 /*Variables*/
@@ -76,8 +76,6 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
 
   float total_error =  sp_error + sv_error; //Total error: scaled velocity and positional errors
   pid_controller_data[5] = total_error;
-
-  float total_error =  sp_error + d_error;
 
   oldPosition = x-x_offset; 
 
