@@ -32,6 +32,8 @@ extern const int k3; //delta=steer
 
 /*Define functions*/
 
+void set_front_motor_velocity(int);
+
 /*
  * Runs a PID controller to keep the front wheel at desired_pos.
  *

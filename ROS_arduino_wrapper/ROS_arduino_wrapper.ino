@@ -186,7 +186,7 @@ void setup() {
 
   //Front wheel calibration loop
   while (y == oldIndex) {
-    analogWrite(PWM_front, 50);
+    analogWrite(PWM_front, 40);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");
     //Serial.println((String(REG_TC0_CV0) + '\t' + y).c_str());

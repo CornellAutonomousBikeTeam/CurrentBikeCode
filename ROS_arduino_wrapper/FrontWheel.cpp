@@ -16,6 +16,28 @@ const int k2 = 10;
 const int k3 = -20; 
 
 /*Functions*/
+
+/*
+ * Set a motor velocity. velocity ranges from -100 to 100. Positive means
+ * clockwise; negative means counterclockwise.
+ */
+void set_front_motor_velocity(int velocity) {
+  if (velocity > 0) {
+    digitalWrite(DIR, LOW);
+  } else {
+    digitalWrite(DIR, HIGH);
+  }
+
+  int abs_velocity = abs(velocity);
+
+  // Limit to 100, or roughly 40% duty cycle
+  if(abs_velocity > 100) {
+    abs_velocity = 100;
+  }
+
+  analogWrite(PWM_front, abs_velocity);
+}
+
 float PID_Controller(float desired_pos, signed int x, signed int x_offset, 
   unsigned long current_t, unsigned long previous_t, signed int oldPosition,
   float *pid_controller_data) {
@@ -55,25 +77,11 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
   float total_error =  sp_error + sv_error; //Total error: scaled velocity and positional errors
   pid_controller_data[5] = total_error;
 
-  if (total_error > 0) {digitalWrite(DIR, LOW);} //Direction of front wheel's rotation
-  else {digitalWrite(DIR, HIGH);}
+  float total_error =  sp_error + d_error;
 
   oldPosition = x-x_offset; 
 
-  // Cast the output to the motor to an int
-  int motor_output = (int)total_error;
-
-  // We only want the magnitude of the output
-  motor_output = abs(motor_output);
-
-  // Maximium motor output magnitude should be 100
-  if(motor_output > 100) {
-    motor_output = 100;
-  //This maybe should be increased to 255 with the repaired front motor 10.10.17
-  }
-
-  // Write to the motor
-  analogWrite(PWM_front, motor_output);
+  set_front_motor_velocity((int)total_error);
   return current_vel;
 }
 
