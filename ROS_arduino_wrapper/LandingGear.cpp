@@ -17,3 +17,12 @@ void landingGearUp() {
   digitalWrite(47, HIGH); //Sets relay pin 2 to low (turns light off)
 }
 
+void initLandingGear() {
+  pinMode(LG_RELAY_1, OUTPUT);
+  pinMode(LG_RELAY_2, OUTPUT);
+}
+
+void setLandingGear(int state) {
+  digitalWrite(LG_RELAY_1, state);
+  digitalWrite(LG_RELAY_2, state);
+}

@@ -1,4 +1,5 @@
 #include "RC.h"
+#include "LandingGear.h"
 #include <Arduino.h>
 
 /*Variables*/
@@ -97,19 +98,16 @@ void calcSignal5()
     }
   }
   if (pulse_time5 < 15000) {
-    if(numTicksHigh>5) { // works at 5
-    digitalWrite(48, HIGH); //sets relay pin 1 to High (turns light on)
-    digitalWrite(47, HIGH); //sets relay pin 2 to High  (turns light on)
+    if(numTicksHigh>5) {
+      //setLandingGear(LG_UP);
     } else {
       numTicksHigh++;
     }
   }
   else {
     numTicksHigh = 0;
-    digitalWrite(48, LOW); //sets relay pin 1 to High (turns light off)
-    digitalWrite(47, LOW); //sets relay pin 2 to High  (turns light off)
+    //setLandingGear(LG_DOWN);
   }
-  
 }
 
 void calcSignal6() 

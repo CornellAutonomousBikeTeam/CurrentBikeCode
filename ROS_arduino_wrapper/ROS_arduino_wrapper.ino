@@ -37,9 +37,6 @@ int nmea_idx = 0;
 //#define front_steer_value 51
 //#define back_wheel_speed 28
 
-#define relay3 50
-#define relay4 49
-
 //LEDs on bike
 #define LED_1 22 //red
 #define LED_2 35 //yellow
@@ -79,6 +76,7 @@ void navOrRC() {
   }
   else {
     forward_speed = map(pulse_time2, 1100, 1900, 0, 200);
+    setLandingGear(forward_speed>70);
     steer_range = map(pulse_time, 1100, 1900, 60, -60);
     desired_steer = steer_range * .01 ;
     desired_lean = (desired_speed * desired_speed / 10.0) * desired_steer; //phi_d = (v^2/l/g) * delta_d
@@ -146,11 +144,7 @@ void setup() {
   pinMode(EN, OUTPUT);
   digitalWrite(EN, LOW);
 
-  //setup Landing Gear
-  //pinMode(relay1, OUTPUT);
-  //pinMode(relay2, OUTPUT);
-  pinMode(relay3, OUTPUT);
-  pinMode(relay4, OUTPUT);
+  initLandingGear();
 
   //setup RC
   //pinMode(RC_CH1, INPUT);
@@ -196,8 +190,8 @@ void setup() {
   analogWrite(PWM_front, 0);
 
   //rear motor initialization
-  int pwm = 60;
-  rampToPWM(170, 0);
+  //int pwm = 60;
+  //rampToPWM(170, 0);
 
   digitalWrite(LED_1, HIGH); //LED to signal setup function done
 
