@@ -18,6 +18,8 @@ volatile float pulse_time5 ;
 volatile float pulse_time6 ; 
 bool nav_mode;
 
+// local variables
+int numTicksHigh; // used in channel 5 interrupt handler
 
 //difference between timer_start and micros() is the length of time that the pin
 //was HIGH - the PWM pulse length. volatile int pulse_time;
@@ -86,15 +88,26 @@ void calcSignal5()
   else
   {
     //only worry about this if the timer has actually started
-    if (timer_start5 != 0 && ((volatile int)micros() - timer_start5 > 1000) && ((volatile int)micros() - timer_start5 < 2000) ) // filter out noise
+    //if (timer_start5 != 0 && ((volatile int)micros() - timer_start5 > 1000) && ((volatile int)micros() - timer_start5 < 2000) ) // filter out noise
     {
       //record the pulse time
       pulse_time5 = ((volatile int)micros() - timer_start5); //pulse time is the output from the rc value that we need to transform into a pwm value
       //restart the timer
-      /*Serial.print("pulse_time5 ");
-      Serial.println(pulse_time5);*/
       timer_start5 = 0;
     }
+  }
+  if (pulse_time5 < 15000) {
+    if(numTicksHigh>5) { // works at 5
+    digitalWrite(48, HIGH); //sets relay pin 1 to High (turns light on)
+    digitalWrite(47, HIGH); //sets relay pin 2 to High  (turns light on)
+    } else {
+      numTicksHigh++;
+    }
+  }
+  else {
+    numTicksHigh = 0;
+    digitalWrite(48, LOW); //sets relay pin 1 to High (turns light off)
+    digitalWrite(47, LOW); //sets relay pin 2 to High  (turns light off)
   }
   
 }
