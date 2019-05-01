@@ -1,4 +1,4 @@
-  #include "FrontWheel.h"
+#include "FrontWheel.h"
 #include <math.h>
 
 /*Variables*/
@@ -13,7 +13,9 @@ int maxfront_PWM = 110;
 
 const int k1 = 70;
 const int k2 = 10; 
-const int k3 = -20; 
+const int k3 = -40; 
+
+const int MAX_VELOCITY = 100;
 
 /*Functions*/
 
@@ -30,9 +32,8 @@ void set_front_motor_velocity(int velocity) {
 
   int abs_velocity = abs(velocity);
 
-  // Limit to 100, or roughly 40% duty cycle
-  if(abs_velocity > 100) {
-    abs_velocity = 100;
+  if(abs_velocity > MAX_VELOCITY) {
+    abs_velocity = MAX_VELOCITY;
   }
 
   analogWrite(PWM_front, abs_velocity);
@@ -84,14 +85,15 @@ float PID_Controller(float desired_pos, signed int x, signed int x_offset,
 }
 
 float eulerIntegrate(float desiredVelocity, float current_pos) {
-  float desiredPosition = current_pos + desiredVelocity * ((float)interval / 1000000.0) ;
+  float desiredPosition = current_pos + desiredVelocity / 100.0;
   return desiredPosition;
 }
 
-float frontWheelControl(float desiredVelocity, float current_pos) {
+float frontWheelControl(float desiredVelocity, float current_pos, float *integrator_output) {
 
   unsigned long current_t = micros();
   float desired_pos = eulerIntegrate(desiredVelocity, current_pos);
+  *integrator_output = desired_pos; 
 
   // The PID_Controller function will actually rotate the front motor!
   float current_vel = PID_Controller(desired_pos, relativePos, x_offset, current_t, previous_t, oldPosition, pid_controller_data_array);

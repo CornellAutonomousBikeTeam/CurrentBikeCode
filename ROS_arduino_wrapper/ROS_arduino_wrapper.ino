@@ -34,6 +34,15 @@ int n = 0;
 char nmea_buffer[200];
 int nmea_idx = 0;
 
+
+// LOGGING FOR FRONT WHEEL CONTROLLER TESTING
+  const int N = 400;  
+  long times[N];
+  float integrator[N];
+  float positions[N];
+  const int STEP_IDX = 200;
+  const int STEP_RESOLUTION = 2;
+
 //#define front_steer_value 51
 //#define back_wheel_speed 28
 
@@ -203,22 +212,51 @@ int blinkState = HIGH;
 void loop() {
   numTimeSteps++;
 
-  navOrRC();
+  //navOrRC();
 
   analogWrite(PWM_rear, forward_speed);
 
   l_start = micros();
 
+  
+    desired_steer = ((numTimeSteps/STEP_RESOLUTION)< STEP_IDX ? 0 : M_PI/4); //Get desired steer from the nav instructions
+    desired_lean = (desired_speed * desired_speed / 10.0) * desired_steer; //phi_d = (v^2/l/g) * delta_d
+
   float encoder_position = updateEncoderPosition(); //output is current position wrt front zero
   //Serial.println("Got encoder position");
   roll_t imu_data = updateIMUData();
   //Serial.println("Got IMU data");
-  float desiredVelocity = balanceController(((1) * (imu_data.roll_angle)), (1) * imu_data.roll_rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
+  float desiredVelocity = balanceController(((0 /* FIX THIS!!!!!!!!!!!!!!!!!!!!!!!!!! */) * (imu_data.roll_angle)), (0) * imu_data.roll_rate, encoder_position); //*****PUT IN OFFSET VALUE BECAUSE THE IMU IS READING AN ANGLE OFF BY +.16 RADIANS
   //Serial.println("Got desired velocity");
+  set_front_motor_velocity(desiredVelocity);
   // frontWheelControl also calls a function that sends the PWM signal to the front motor
   // frontWheelControl will update the pid_controller_data.data array with new info
-  float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
+  //float integrator_output = 0;
+  //float current_vel = frontWheelControl((-1) * desiredVelocity, encoder_position, &integrator_output); //DESIRED VELOCITY SET TO NEGATIVE TO MATCH SIGN CONVENTION BETWEEN BALANCE CONTROLLER AND
   //Serial.println("Got current velocity");
+
+  // LOG FRONT WHEEL POSITION AND COMMAND
+  if((numTimeSteps % STEP_RESOLUTION) == 0) {
+    int idx = numTimeSteps/STEP_RESOLUTION;
+    times[idx] = millis();
+    //integrator[idx] = integrator_output;
+    positions[idx] = encoder_position;
+  }
+
+  if(numTimeSteps/STEP_RESOLUTION > N) {
+    //Serial.println("0\t0\t" + String(positions[0]));
+    for(int i=1; i < N; i++) {
+      Serial.print(String(times[i]-times[0]) + "\t");
+      Serial.print((i>=STEP_IDX)*(-M_PI/4),4);
+      Serial.print("\t");
+      //Serial.print(integrator[i],4);
+      //Serial.print("\t"); 
+      Serial.println(positions[i],4);
+    }
+    digitalWrite(LED_2, true);
+    set_front_motor_velocity(0);
+    while(true){}
+  }
 
   rosPublishBikeState(current_vel, desiredVelocity, encoder_position, desired_steer, imu_data.roll_rate, imu_data.roll_angle, speed, forward_speed, battery_voltage, imu_data.yaw);
 
@@ -265,6 +303,6 @@ void loop() {
     //SerialUSB.println("RUNNING AT" + String(count) + " HZ");
     total_millis = 0;  l_diff = micros() - l_start;
     count = 0;
-  }
+  }   
   //SerialUSB.print("Nav_instr: ");Serial.println(nav_instr);
 }

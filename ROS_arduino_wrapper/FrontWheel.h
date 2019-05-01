@@ -67,7 +67,7 @@ float eulerIntegrate(float, float);
  * also calls PID_Controller function, which sends the actual PWM
  * signal to the front wheel.
  */
-float frontWheelControl(float, float);
+float frontWheelControl(float, float, float *);
 
 /* Function that returns desired angular velocity of front wheel based on roll angle, 
  *  roll rate (both from IMU) and encoder angle as well as desired lean and steer */
