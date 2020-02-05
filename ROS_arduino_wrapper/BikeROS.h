@@ -4,6 +4,8 @@
 #include <ros.h>
 
 typedef ros::NodeHandle_<ArduinoHardware, 1, 3, 500, 500> RosNodeHandle;
+
+// navigation's command for what angle the front wheel should point in, updated in rosNavInstrListener (in BikeROS), used in navOrRC (in ros_arduino_wrapper.ino)
 extern float nav_instr;
 
 void initROS();

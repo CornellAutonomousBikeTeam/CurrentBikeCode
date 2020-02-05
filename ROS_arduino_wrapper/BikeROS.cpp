@@ -28,7 +28,9 @@ ros::Publisher nmea_pub("nmea", &nmea_state);
 
 // /nav_instr
 float nav_instr;
-void rosNavInstrListener(const std_msgs::Float32& data) { nav_instr = data.data; }
+void rosNavInstrListener(const std_msgs::Float32& data) {
+    nav_instr = data.data;
+}
 ros::Subscriber<std_msgs::Float32> nav_sub("nav_instr", &rosNavInstrListener);
 
 void initROS() {

@@ -1,6 +1,6 @@
+// Include header files for the support libraries
 #include "BikeROS.h"
 #include "TinyGPS++.h"
-TinyGPSPlus gps;
 #include "IMU.h"
 #include "FrontWheel.h"
 #include "RC.h"
@@ -9,48 +9,39 @@ TinyGPSPlus gps;
 #include "LandingGear.h"
 #include <math.h>
 
+// The GPS object
+TinyGPSPlus gps;
+
 int count = 0; //used to determine if we are running at 5hz
-int prev_millis = 0; //Used to help calculate time since last update
+int prev_millis = 0; // holds the timestamp (in MILLIseconds) when the loop function was last called
 int curr_millis = 0; //Used to help calculate time since last update
 int total_millis = 0; //Holds total time passed so we know when to update Hz
 int bits_so_far = 0; //Unclear what this is used for atm
 
-boolean CH1, CH2, CH3, CH4, CH5, CH6; //current cycle's logic
-
-//Timed Loop Variables
+// Timed Loop Variables
+// holds the timestamp (in microseconds) when the loop() function started
 long l_start;
-long l_diff;
 
-//count the number of times the time step has been calculated to calculate a running average time step
-int numTimeSteps = 0;
-float averageTimeStep = 0;
-int n = 0;
-
-//Watchdog
-#define WDI 42
-#define EN 41
-
-// Buffer for publishing NMEA sentences from the GPS to /nmea
+// Cheap GPS support
+// Buffer for storing NMEA sentences received from the GPS until they are published to the ROS topic /nmea
 char nmea_buffer[200];
+// Used to keep track of how long the NMEA sentence that we're reading right now is (because we might receive part of the sentence in one loop() call)
 int nmea_idx = 0;
 
-//#define front_steer_value 51
-//#define back_wheel_speed 28
-
-//LEDs on bike
-#define LED_1 22 //red
-#define LED_2 35 //yellow
-#define LED_3 36 //blue
+//Pins for the LEDs on bike
+#define LED_1 22 // red    (as of Feb 2020, turned off when we exit setup())
+#define LED_2 35 // yellow (as of Feb 2020, unused)
+#define LED_3 36 // blue   (as of Feb 2020, toggled whenever loop() finishes once)
 
 //Voltage constants and variables
-const int VOLTAGE_PIN = 63; //A9
+// One of the 2015-2016 reports has a derivation of these constants; the constants can be used to calculate the battery voltage
+const int VOLTAGE_PIN = 63; //A9 - this pin is connected to a voltage sensor on the Arduino, in case we want to use it (feb 2020)
 float VOLTAGE_CONST = 14.2;
 float battery_voltage = 0;
 float VELOCITY_VOLTAGE_K = 1.7936;
 float VELOCITY_VOLTAGE_C = -1.2002;
 
-
-//Method for sending hex messages to the gps
+//Method for sending hex messages to the cheap GPS
 void sendUBX(byte *UBXmsg, byte msgLength) {
   for (int i = 0; i < msgLength; i++) {
     Serial3.write(UBXmsg[i]);
@@ -60,10 +51,14 @@ void sendUBX(byte *UBXmsg, byte msgLength) {
 /*Method to set the steer and speed based on either rc or nav instructors depending on mode set by remote*/
 void navOrRC() {
   if (nav_mode) {
-    desired_steer = nav_instr; //Get desired steer from the nav instructions
-    desired_lean = (desired_speed * desired_speed / 10.0) * desired_steer; //phi_d = (v^2/l/g) * delta_d
+    desired_steer = nav_instr; // Get desired steer from the nav instructions (read from ROS topic /nav_instr)
+    desired_lean = (desired_speed * desired_speed / 10.0) * desired_steer; //phi_d = (v^2/(l * g)) * delta_d [for more explanation of this formula see the end of Dylan Meehan's 2017 masterpiece "introduction ..." available in google drive
+    
+    // run a simple P controller to see if we should increase or decrease the speed of the rear wheel
     rear_pwm = (int)(gain_p * (desired_speed - speed) + rear_pwm); //Actual Controller
 
+    // TODO clarify what 180 and 60 are in terms of meters per second
+    // make sure that the rear PWM value is within safety margins
     if (rear_pwm > 180) {
       rear_pwm = 180; //Max PWM value that bike can do, regardless of what nav algo wants to say
     }
@@ -71,10 +66,10 @@ void navOrRC() {
       rear_pwm = 60; //Min PWM value that bike can do, regardless of what nav algo wants to say
     }
 
+    // set the forward velocity of the bike (that comes from the rear wheel) to the PWM value for the rear wheel that we just calculated.
     forward_speed = rear_pwm;
     SerialUSB.println("Nav mode");
-  }
-  else {
+  } else {
     forward_speed = map(pulse_time2, 1100, 1900, 0, 200);
     setLandingGear(forward_speed>70);
     steer_range = map(pulse_time, 1100, 1900, 60, -60);
@@ -139,11 +134,6 @@ void setup() {
   pinMode (PWM_front, OUTPUT);
   pinMode (PWM_rear, OUTPUT);
 
-  //setup Watchdog
-  pinMode(WDI, OUTPUT);
-  pinMode(EN, OUTPUT);
-  digitalWrite(EN, LOW);
-
   initLandingGear();
 
   //setup RC
@@ -177,6 +167,7 @@ void setup() {
   signed int y = REG_TC0_CV1;
   oldIndex = y;
   digitalWrite(DIR, HIGH);
+
 
   //Front wheel calibration loop
   while (y == oldIndex) {
@@ -263,7 +254,7 @@ void loop() {
   count += 1;
   if (total_millis >= 1000) {
     //SerialUSB.println("RUNNING AT" + String(count) + " HZ");
-    total_millis = 0;  l_diff = micros() - l_start;
+    total_millis = 0;
     count = 0;
   }
   //SerialUSB.print("Nav_instr: ");Serial.println(nav_instr);

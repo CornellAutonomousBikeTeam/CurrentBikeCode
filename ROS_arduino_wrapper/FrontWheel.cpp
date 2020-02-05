@@ -31,8 +31,8 @@ void set_front_motor_velocity(int velocity) {
   int abs_velocity = abs(velocity);
 
   // Limit to 100, or roughly 40% duty cycle
-  if(abs_velocity > 100) {
-    abs_velocity = 100;
+  if(abs_velocity > 50) {
+    abs_velocity = 50;
   }
 
   analogWrite(PWM_front, abs_velocity);
