@@ -7,6 +7,7 @@
 #include "RearMotor.h"
 #include "Encoder.h"
 #include "LandingGear.h"
+#include "LightSensor.h"
 #include <math.h>
 
 // The GPS object
@@ -32,6 +33,14 @@ int nmea_idx = 0;
 #define LED_1 22 // red    (as of Feb 2020, turned off when we exit setup())
 #define LED_2 35 // yellow (as of Feb 2020, unused)
 #define LED_3 36 // blue   (as of Feb 2020, toggled whenever loop() finishes once)
+
+//Pins for the ligh sensor
+#define S0 16
+#define S1 49
+#define S2 50
+#define S3 16
+#define OE 47  //output enable
+#define sensorOut 48
 
 //Voltage constants and variables
 // One of the 2015-2016 reports has a derivation of these constants; the constants can be used to calculate the battery voltage
@@ -170,12 +179,13 @@ void setup() {
 
 
   //Front wheel calibration loop
-  while (y == oldIndex) {
+  while (y == oldIndex) { 
     analogWrite(PWM_front, 40);
     y = REG_TC0_CV1;
     //Serial.println("Ticking");
     //Serial.println((String(REG_TC0_CV0) + '\t' + y).c_str());
   }
+  
 
   x_offset = REG_TC0_CV0;   //set x offset to define where the front tick is with respect to the absolute position of the encoder A and B channels
   analogWrite(PWM_front, 0);
@@ -187,12 +197,30 @@ void setup() {
   digitalWrite(LED_1, HIGH); //LED to signal setup function done
 
   nav_mode = true; //Variable that tells whether bike is in nav mode or not
+
+  //light sensor setup
+  // Setting the outputs
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+
+  // Setting the sensorOut as an input
+  pinMode(sensorOut, INPUT);
+
+  // Setting frequency scaling to 20%
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, LOW);
+
+    // Setting unfiltered photodiodes to be read
+   digitalWrite(S2, HIGH);
+  digitalWrite(S3, HIGH);
+  digitalWrite(OE, LOW);
 }
 
 //Loop variables
 int blinkState = HIGH;
 void loop() {
-  numTimeSteps++;
 
   navOrRC();
 
@@ -258,4 +286,11 @@ void loop() {
     count = 0;
   }
   //SerialUSB.print("Nav_instr: ");Serial.println(nav_instr);
+  
+  //light sensor loop
+
+
+  // Reading the output frequency
+  lightSensorFrequency = pulseIn(sensorOut, LOW);
+  rosPublishLightSensor(lightSensorFrequency);
 }

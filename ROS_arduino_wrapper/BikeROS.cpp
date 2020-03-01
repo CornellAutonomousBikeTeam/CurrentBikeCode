@@ -3,6 +3,7 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
+#include <std_msgs/Int32.h>
 
 RosNodeHandle nh;
 
@@ -23,6 +24,10 @@ ros::Publisher pid_pub("pid", &pid_controller_data);
 // /nmea
 std_msgs::String nmea_state;
 ros::Publisher nmea_pub("nmea", &nmea_state);
+
+//lightsensor
+std_msgs::Int32 light_sensor_data;
+ros::Publisher light_sensor_pub("light_sensor", &light_sensor_data);
 
 // Subscribers
 
@@ -79,6 +84,9 @@ void initROS() {
 
     // /nmea
     nh.advertise(nmea_pub);
+
+    //lightsensor
+    nh.advertise(light_sensor_pub);
 
     // Subscribers
 
@@ -152,6 +160,11 @@ void rosPublishPid(const float *data) {
 void rosPublishNmea(const char *data) {
     nmea_state.data = data;
     nmea_pub.publish(&nmea_state);
+}
+
+void rosPublishLightSensor(const int32_t data) {
+  light_sensor_data.data = data;
+  light_sensor_pub.publish(&light_sensor_data);
 }
 
 void rosSpinOnce() {
