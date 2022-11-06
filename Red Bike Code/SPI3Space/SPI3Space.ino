@@ -83,7 +83,7 @@ void setup() {
   Output(D11);
   //pinMode(inter, INPUT);
   //attachInterrupt(digitalPinToInterrupt(inter), readStatus, HIGH); 
-  Outset(D11);
+  OutSet(D11);
   SPI.begin();
   Serial.begin(9600);
   
