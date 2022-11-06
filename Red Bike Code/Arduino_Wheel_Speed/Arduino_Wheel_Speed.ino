@@ -9,6 +9,7 @@ const byte REVERSE = 5;
 
 
 
+
 inline void reset1(unsigned long * timerstart) {
   *timerstart = micros();
 }
