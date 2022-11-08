@@ -93,7 +93,7 @@ void setup() {
  */
 void readData(){
   for (int i=0; i<3; i++) {
-    for (int j=0; j<4; j++) {
+    for (int j=3; j>=0; j--) {
       imu_d[i].b_imu[j] =  transferInst(0xFF, cs);
     }
   }  
@@ -122,4 +122,5 @@ void loop() {
   if(status_val != 0x01){
     readData();
   }
+  
 }
