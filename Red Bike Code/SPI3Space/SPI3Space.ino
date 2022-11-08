@@ -77,16 +77,10 @@ void readStatus(){
   readFlag = true;
 }
 void setup() {
-  // put y our setup code here, to run once:
-  //SPI Setup
-  //pinMode(cs, OUTPUT);
   Output(D11);
-  //pinMode(inter, INPUT);
-  //attachInterrupt(digitalPinToInterrupt(inter), readStatus, HIGH); 
   OutSet(D11);
   SPI.begin();
   Serial.begin(9600);
-  
 } 
 /*
  * SPI transfer function for any select line. Takes in select line)
@@ -121,6 +115,10 @@ void loop() {
   */
   if(status_val != 0x01){
     readData();
+  }
+  for(int k = 0; k < 3; k++){
+    Serial.print("Degree Tared: ");
+    Serial.println(imu_d[k].f_imu);
   }
   
 }
