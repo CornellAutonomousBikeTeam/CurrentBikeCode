@@ -84,7 +84,7 @@ void setup() {
   Output(D8); //MOSI
   Input(D10);//MISO
   OutSet(D4);//active low so pull high to disable initially
-  SPI.begin();
+  SPI.begin();// start SPI
   Serial.begin(9600);
 } 
 /*
