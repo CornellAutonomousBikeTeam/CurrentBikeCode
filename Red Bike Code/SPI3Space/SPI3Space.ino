@@ -67,9 +67,11 @@ union imu_data{
 
 byte transferInst(byte inst, int cs){
   //digitalWrite(cs, LOW);
-  OutClr(D11);
+  OutClr(D4);
+  delay(1);
   byte res = SPI.transfer(inst);
-  OutSet(D11);
+  delay(1);
+  OutSet(D4);
   return res;
 }
 
@@ -77,9 +79,12 @@ void readStatus(){
   readFlag = true;
 }
 void setup() {
-  Output(D11);
-  OutSet(D11);
-  SPI.begin();
+  Output(D4); //CS - could hardwire later - could also be the current problem
+  Output(D9); //SCK
+  Output(D8); //MOSI
+  Input(D10);//MISO
+  OutSet(D4);//active low so pull high to disable initially
+  SPI.begin();// start SPI
   Serial.begin(9600);
 } 
 /*
@@ -95,25 +100,16 @@ void readData(){
 void loop() {
   // put your main code here, to run repeatedly:
   SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
-  //add 
-  /*
-   * Send initial instructions for instruction transfer
-   */
-  transferInst(0x01, cs);
-  delay(1);//sample millisecond delay to avoid potential corrupted transactions
-  transferInst(0xF6, cs);
-  delay(1);//need to add delays? //do in delay where the status isn't ready. 
+
+  byte buffer_clear_result = transferInst(0x01, cs);
+  Serial.print("Buffer Clear Result"),Serial.println(buffer_clear_result, HEX);
+  byte packet_result = transferInst(0xF6, cs);
+  Serial.print("Packet Result"),Serial.println(packet_result, HEX);
+  byte command_result = transferInst(0x01, cs);
+  Serial.print("Command Result"),Serial.println(command_result, HEX);
   byte status_val = transferInst(0XFF, cs);
-  delay(1);
-  //Read data from YEI 3 Space sensor - need to do endian swap - not sure
-  //read on flag high
-  /*
-  if (readFlag){
-    readStatus();
-    readFlag = false; //reset flag
-  }
-  */
-  if(status_val != 0x01){
+  Serial.println(status_val, HEX);
+  if(status_val == 0x01){
     readData();
   }
   for(int k = 0; k < 3; k++){
