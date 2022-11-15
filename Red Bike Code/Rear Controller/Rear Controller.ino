@@ -57,7 +57,7 @@ TurboPWM pwm;
 #define Read(pin)  ((PORT_IOBUS->Group[pin>>5].IN.reg) >> (pin & 0x1f) & 1)   // Read pin
 
 
-uint8_t channel = 0;
+//uint8_t channel = 0;
 
 void setup()
 {
@@ -65,18 +65,18 @@ void setup()
   Output(D5);
   //assigns PWM frequency of 1.0 KHz and a duty cycle of 0%
   pwm.setClockDivider(1, true);
-  pwm.timer(1, 1, 100, true);
+  pwm.timer(1, 1, 100, true); // Timer 1, no prescaler, true is single slope (double check), 100 - threshold?
 }
 
 void loop()
 {
-  int shifted = ReqSpeed - Center_Point;
+  int shifted = ReqSpeed - Center_Point; //double check what units of reqspeed and center_pointer
   if(shifted<0){
     shifted = 0-shifted;
-    OutSet(D5);
+    OutSet(D5); //reason for setting D5 high and low?
   }else{
     OutClr(D5);
   }
-  pwm.analogWrite(REARPWM, shifted);
+  pwm.analogWrite(REARPWM, shifted); //write pwm on pin 3
 
 }
