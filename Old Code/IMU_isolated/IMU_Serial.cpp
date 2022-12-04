@@ -35,28 +35,18 @@ void initIMU(void){
   Serial1.begin(115200);
 }
 float getIMU(byte commandToWrite, int x){
-
-    //SPI.beginTransaction(settings);
-//   float l_start = micros();
-  /*Setup bytes to write*/
-  // Clear the internal data buffer on the IMU
   byte result = transferByte(0x01);
-      //Serial.print("Cleared internal buffer. Result: "),Serial.println(result);
-     delay(1);
+  delay(1);
 
   // Send start of packet:
   result = transferByte(0xF6);
-     //  Serial.print("Send start of packet. Result: "),Serial.println(result);
-     delay(1);
+  delay(1);
   
   // Send command (tared euler angles)
   result = transferByte(commandToWrite); 
-  //result=transferByte(0x01); //0x01 asks for tared Euler angles
-     //  Serial.print("Send commmand 0x01. Result: "),Serial.println(result);
   
   // Get status of device:
   result = transferByte(0xFF);
-     //  Serial.print("Status of device. Result: "),Serial.println(result);
 
   // idle represents whether or not the IMU is in the idle state. if it is then it will
   // breake the loop after counter reaches a number of cycles in the idle state   
@@ -65,7 +55,6 @@ float getIMU(byte commandToWrite, int x){
   while (result != 0x01 && (idle == 1 || counter < 11)) {  // Repeat until device is Ready 
     delay(1);
     result = transferByte(0xFF);
-    //SerialUSB.print("Status of device. Result: "),SerialUSB.println(result);
     if (result == 0){
       idle = 0;
       counter ++;

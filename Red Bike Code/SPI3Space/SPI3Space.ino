@@ -64,7 +64,7 @@ union imu_data{
   byte b_imu[4];
   float f_imu;
 }imu_d[3];
-
+/*
 byte transferInst(byte inst, int cs){
   digitalWrite(4, LOW);
   //OutClr(D4);
@@ -74,10 +74,9 @@ byte transferInst(byte inst, int cs){
   //OutSet(D4);
   digitalWrite(4, HIGH);
   return res;
-}
-
-void readStatus(){
-  readFlag = true;
+}*/
+byte transferInst(byte inst){
+  return Serial1.write(inst);
 }
 void setup() {
   /*
@@ -107,6 +106,7 @@ void readData(){
     }
   }  
 }
+/*
 void loop() {
   // put your main code here, to run repeatedly:
   SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
@@ -125,6 +125,24 @@ void loop() {
   for(int k = 0; k < 3; k++){
     Serial.print("Degree Tared: ");
     Serial.println(imu_d[k].f_imu);
+  }
+  
+}
+*/
+void loop(){
+  byte buffer_clear_result = transferInst(0x01);
+  delay(1);
+
+  byte packet_result = transferInst(0xF6);
+  delay(1);
+  
+  byte command_result = transferInst(0x01);
+  delay(1);
+
+  byte status_val = transferInst(0xFF);
+
+  if (status_val == 0x01){
+    readData();
   }
   
 }
