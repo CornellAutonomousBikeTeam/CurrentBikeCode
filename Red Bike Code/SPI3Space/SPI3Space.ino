@@ -66,12 +66,13 @@ union imu_data{
 }imu_d[3];
 
 byte transferInst(byte inst, int cs){
-  //digitalWrite(cs, LOW);
-  OutClr(D4);
+  digitalWrite(4, LOW);
+  //OutClr(D4);
   delay(1);
   byte res = SPI.transfer(inst);
   delay(1);
-  OutSet(D4);
+  //OutSet(D4);
+  digitalWrite(4, HIGH);
   return res;
 }
 
@@ -79,11 +80,20 @@ void readStatus(){
   readFlag = true;
 }
 void setup() {
+  /*
   Output(D4); //CS - could hardwire later - could also be the current problem
   Output(D9); //SCK
   Output(D8); //MOSI
   Input(D10);//MISO
-  OutSet(D4);//active low so pull high to disable initially
+  OutSet(D4);//active low so pull high to disable initially]
+  */
+  /*
+  pinMode(4, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(10, INPUT);*/
+  pinMode(4, OUTPUT);
+  digitalWrite(4, HIGH);
   SPI.begin();// start SPI
   Serial.begin(9600);
 } 
