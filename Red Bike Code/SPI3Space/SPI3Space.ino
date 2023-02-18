@@ -64,26 +64,35 @@ union imu_data{
   byte b_imu[4];
   float f_imu;
 }imu_d[3];
-
+/*
 byte transferInst(byte inst, int cs){
-  //digitalWrite(cs, LOW);
-  OutClr(D4);
+  digitalWrite(4, LOW);
+  //OutClr(D4);
   delay(1);
   byte res = SPI.transfer(inst);
   delay(1);
-  OutSet(D4);
+  //OutSet(D4);
+  digitalWrite(4, HIGH);
   return res;
-}
-
-void readStatus(){
-  readFlag = true;
+}*/
+byte transferInst(byte inst){
+  return Serial1.write(inst);
 }
 void setup() {
+  /*
   Output(D4); //CS - could hardwire later - could also be the current problem
   Output(D9); //SCK
   Output(D8); //MOSI
   Input(D10);//MISO
-  OutSet(D4);//active low so pull high to disable initially
+  OutSet(D4);//active low so pull high to disable initially]
+  */
+  /*
+  pinMode(4, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(10, INPUT);*/
+  pinMode(4, OUTPUT);
+  digitalWrite(4, HIGH);
   SPI.begin();// start SPI
   Serial.begin(9600);
 } 
@@ -97,6 +106,7 @@ void readData(){
     }
   }  
 }
+/*
 void loop() {
   // put your main code here, to run repeatedly:
   SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
@@ -115,6 +125,24 @@ void loop() {
   for(int k = 0; k < 3; k++){
     Serial.print("Degree Tared: ");
     Serial.println(imu_d[k].f_imu);
+  }
+  
+}
+*/
+void loop(){
+  byte buffer_clear_result = transferInst(0x01);
+  delay(1);
+
+  byte packet_result = transferInst(0xF6);
+  delay(1);
+  
+  byte command_result = transferInst(0x01);
+  delay(1);
+
+  byte status_val = transferInst(0xFF);
+
+  if (status_val == 0x01){
+    readData();
   }
   
 }
