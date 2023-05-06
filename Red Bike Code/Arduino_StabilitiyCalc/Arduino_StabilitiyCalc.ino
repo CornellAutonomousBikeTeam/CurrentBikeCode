@@ -26,79 +26,59 @@ class StabilityCalc
 
     float final_control_val;
 
-}
+    StabilityCalc(){
+      fixgravity = floattofixed(gravity);
+      fixbikeHeight = floattofixed(bikeHeight);
+      fixbikeLength = floattofixed(bikeLength);
+      fixb = floattofixed(b);
+      fixbikeHL= multiply_fixed(fixbikeHeight, fixbikeLength);
+    } 
+
+    int16_t floattofixed(float x){
+    return (int16_t)(x * 16);
+    }
+
+    float fixedtofloat(int16_t x){
+    return (x)/16.0;
+    }
+
+    int16_t multiply_fixed(int16_t d, int16_t c){
+    return (int16_t) ((((int32_t) d) * ((int32_t) c)) >> 4);
+    }
+
+    int16_t divide_fixed(int16_t d, int16_t c){
+    return (int16_t) ((((int32_t) d) / ((int32_t) c)) >> 4);
+    }
+
+    int16_t calculateLeanAngle(float leanAngle) {
+      int16_t fixleanAngle = floattofixed(leanAngle);
+      int16_t fixleangrav =  multiply_fixed(fixleanAngle, fixgravity);
+      return divide_fixed(fixleangrav, fixbikeHeight);
+    }
+
+    int16_t calculateStability_Factor(float velocity, float steeringAngle){
+      int16_t fixvelocity = floattofixed(velocity);
+      int16_t fixsteeringAngle = floattofixed(steeringAngle);
+      int16_t fixvelsquare = multiply_fixed(fixvelocity, fixvelocity);
+      int16_t fixvelsteer = multiply_fixed(fixvelsquare, fixsteeringAngle);
+      return divide_fixed(fixvelsteer, fixbikeHL);
+    }
+
+    int16_t calculateStability_AngularFactor(float velocity, float steeringAngularRate) {
+      int16_t fixvelocity = floattofixed(velocity);
+      int16_t fixvelb = multiply_fixed(fixvelocity, fixb);
+      int16_t fixsteeringAngularRate = floattofixed(steeringAngularRate);
+      int16_t fixvelbAngle = multiply_fixed(fixvelb, fixsteeringAngularRate);
+      return divide_fixed(fixvelbAngle, fixbikeHL);
+    }
+
+
+    int16_t calculateMotionEqn(float leanAngleCalc, float steeringAngleCalc, float steeringAngularRateCalc, float velocitycalc){ 
+     return calculateLeanAngle(leanAngleCalc) - calculateStability_Factor(velocitycalc, steeringAngleCalc) - calculateStability_AngularFactor(velocitycalc, steeringAngularRateCalc);
+    }
+};
     
 
-
-
-int16_t floattofixed(float x){
-  return (int16_t)(x * 16);
-}
-
-float fixedtofloat(int16_t x){
-  return (x)/16.0;
-}
-
-int16_t multiply_fixed(int16_t d, int16_t c){
-  return (int16_t) ((((int32_t) d) * ((int32_t) c)) >> 4);
-}
-
- int16_t divide_fixed(int16_t d, int16_t c){
-    return (int16_t) ((((int32_t) d) / ((int32_t) c)) >> 4);
-  }
-
-  int16_t calculateLeanAngle(float leanAngle) {
-    int16_t fixleanAngle = floattofixed(leanAngle);
-    int16_t fixleangrav =  multiply_fixed(fixleanAngle, fixgravity);
-    return divide_fixed(fixleangrav, fixbikeHeight);
-  }
-
-
-
-
-  int16_t calculateStability_Factor(float velocity, float steeringAngle){
-    int16_t fixvelocity = floattofixed(velocity);
-    int16_t fixsteeringAngle = floattofixed(steeringAngle);
-    int16_t fixvelsquare = multiply_fixed(fixvelocity, fixvelocity);
-    int16_t fixvelsteer = multiply_fixed(fixvelsquare, fixsteeringAngle);
-    return divide_fixed(fixvelsteer, fixbikeHL);
-  }
-
-
-
-
-  int16_t calculateStability_AngularFactor(float velocity, float steeringAngularRate) {
-    int16_t fixvelocity = floattofixed(velocity);
-    int16_t fixvelb = multiply_fixed(fixvelocity, fixb);
-    int16_t fixsteeringAngularRate = floattofixed(steeringAngularRate);
-    int16_t fixvelbAngle = multiply_fixed(fixvelb, fixsteeringAngularRate);
-    return divide_fixed(fixvelbAngle, fixbikeHL);
-  }
-
-
-  int16_t calculateMotionEqn(float leanAngleCalc, float steeringAngleCalc, float steeringAngularRateCalc, float velocitycalc){ 
-    return calculateLeanAngle(leanAngleCalc) - calculateStability_Factor(velocitycalc, steeringAngleCalc) - calculateStability_AngularFactor(velocitycalc, steeringAngularRateCalc);
-  }
-
-Arduino_StabilityCalc(){
-  
-}
-void StabilityCalcsetup() {
-  fixgravity = floattofixed(gravity);
-  fixbikeHeight = floattofixed(bikeHeight);
-  fixbikeLength = floattofixed(bikeLength);
-  fixb = floattofixed(b);
-  fixbikeHL= multiply_fixed(fixbikeHeight, fixbikeLength);
-
-}
-
-
-float StabilityCalcloop()
-{
-  return final_control_val = fixedtofloat(calculateMotionEqn(20, 20, 20, 20));
-}
-
-  
   
   
 
