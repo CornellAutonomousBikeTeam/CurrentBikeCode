@@ -95,15 +95,12 @@ int16_t multiply_fixed(int16_t d, int16_t c)
 { 
   return (int16_t) ((((int32_t) d) * ((int32_t) c)) >> 4);
 }
-
   
-
-
-
 void loop() {
   // put your main code here, to run repeatedly:
   //Serial.println("hello loop");
  //delay(5000);
+ 
 }
 //copy the float to fixed code/ fixed to float code
 //before set up declare two values (float vvalues) = 16.2 , 8.995
