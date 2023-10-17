@@ -34,9 +34,13 @@ struct roll_t updateIMUData() {
 }
 
 void loop() {
+  /*
   byte poll_imu_tared_orientation[] = {0xF7, 0x01, 0x00, 0x01};
-  Serial1.write(":1\n"); 
+  Serial1.write(":12\n"); 
   while(Serial1.available()){
+    delay(1000);
     Serial.println(Serial1.read());
   }
+  */
+  Serial.println(updateIMUData().rate);
 }

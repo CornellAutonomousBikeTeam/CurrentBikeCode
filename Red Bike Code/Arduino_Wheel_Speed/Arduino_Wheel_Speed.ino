@@ -26,7 +26,6 @@ inline void  read1(unsigned long * timerstart) {
 void checkREARTIMER() {
   read1(&REARTIMER_TIMER);
   reset1(&REARTIMER_TIMER);
-  
 }
 
 void checkFRONTPWM() {

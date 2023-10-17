@@ -91,9 +91,12 @@ void setup() {
   pinMode(9, OUTPUT);
   pinMode(8, OUTPUT);
   pinMode(10, INPUT);*/
+  /*
   pinMode(4, OUTPUT);
   digitalWrite(4, HIGH);
   SPI.begin();// start SPI
+  Serial.begin(9600);*/
+  Serial1.begin(115200);
   Serial.begin(9600);
 } 
 /*
@@ -102,7 +105,7 @@ void setup() {
 void readData(){
   for (int i=0; i<3; i++) {
     for (int j=3; j>=0; j--) {
-      imu_d[i].b_imu[j] =  transferInst(0xFF, cs);
+      imu_d[i].b_imu[j] =  transferInst(0xFF);
     }
   }  
 }
@@ -130,6 +133,7 @@ void loop() {
 }
 */
 void loop(){
+  /*
   byte buffer_clear_result = transferInst(0x01);
   delay(1);
 
@@ -145,4 +149,11 @@ void loop(){
     readData();
   }
   
+  Serial.print(imu_d[2].f_imu);
+  */
+  Serial1.write(":1\n"); 
+  while(Serial1.available()){
+    delay(100);
+    Serial.println(Serial1.read());
+  }
 }

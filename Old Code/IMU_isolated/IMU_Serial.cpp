@@ -2,7 +2,6 @@
 
 /*IMU Setup and Functions*/
 /////////////////////////////////////////////////////////////////////////////////////
-
 union u_data {
     byte b[4];
     float fval;
@@ -11,9 +10,11 @@ union u_data {
            // Gyroscope: x-axis (pitch rate), y-axis (yaw rate), z-axis (roll rate)
 
 //function to transfer commands through SPI
-byte transferByte(byte byteToWrite) {     
+byte transferByte(byte byteToWrite) { 
+  digitalWrite(1, LOW);    
   byte Result = 0x00;
-  Result = Serial1.write(byteToWrite);
+  //Result = Serial1.write(byteToWrite);
+  Result = SPI.transfer(byteToWrite); //Using SPI Transfer function to send instructions
   return Result; 
 }
 
@@ -32,21 +33,33 @@ void endianSwap(byte temp[4]) {
 /////////////////////////////////////////////////////////////////////////////////////
 void initIMU(void){
   //IMU
-  Serial1.begin(115200);
+  //Serial1.begin(115200);
+  pinMode(1, OUTPUT); //cs
+  pinMode(9, OUTPUT); //sck
+  pinMode(8, OUTPUT); //mosi
+  pinMode(10, INPUT); //miso
+
+  digitalWrite(4, HIGH);
+  SPI.begin();
+  Serial.begin(9600);
 }
 float getIMU(byte commandToWrite, int x){
   byte result = transferByte(0x01);
+  //System.out.println(result);
   delay(1);
 
   // Send start of packet:
   result = transferByte(0xF6);
+ // System.out.println(result)
   delay(1);
   
   // Send command (tared euler angles)
   result = transferByte(commandToWrite); 
+  //System.out.println(result);
   
   // Get status of device:
   result = transferByte(0xFF);
+ // System.out.println(result);
 
   // idle represents whether or not the IMU is in the idle state. if it is then it will
   // breake the loop after counter reaches a number of cycles in the idle state   
