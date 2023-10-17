@@ -10,7 +10,7 @@ unsigned int ReqSpeed = 710;
 #define REARPWM       3
 
 //creates pwm instance
-TurboPWM pwm;
+TurboPWM pwm; //what TurboPWM is
 
 #define A 0
 #define B 1
@@ -63,8 +63,8 @@ void setup()
 {
   Serial.begin(1000000);
   Output(D5);
-  //assigns PWM frequency of 1.0 KHz and a duty cycle of 0%
-  pwm.setClockDivider(1, true);
+  //assigns PWM frequency of 1.0 KHz and a duty cycle of 0% 
+  pwm.setClockDivider(1, true); //check how much the clock divison is
   pwm.timer(1, 1, 100, true); // Timer 1, no prescaler, true is single slope (double check), 100 - threshold?
 }
 
