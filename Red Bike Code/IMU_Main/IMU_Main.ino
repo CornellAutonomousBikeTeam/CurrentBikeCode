@@ -8,5 +8,6 @@ void setup() {
 void loop() {
   IMU imuInstance;
   float* result = imuInstance.IMUClassloop();
+  Serial.println(result[0]);
   // Do something with result
 }
