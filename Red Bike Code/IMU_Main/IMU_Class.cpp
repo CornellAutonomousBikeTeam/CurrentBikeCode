@@ -1,6 +1,5 @@
 #include "IMU_Header.h"
-#include <Arduino.h>
-#include <SPI.h>
+
 
 // Constructor
 IMU::IMU() : CSN(1), SO(10), SI(8), CLK(9), delta(180/3.14), INST(0x01), instructions{0x01, 0x02, 0x04, 0x08}, flinst{3, 9, 6, 9},
@@ -44,7 +43,7 @@ byte IMU::readData(byte instruction) {
     return result;
 }
 
-float* IMU::IMUClassloop() {
+float * IMU::IMUClassloop() {
     SPI.beginTransaction(settings);
     byte result_loop = readData(instructions[instruction_number]);
 
@@ -73,8 +72,8 @@ float* IMU::IMUClassloop() {
         data[2].fval *= delta;
         currentMillis = micros();
 
-        float degsval[3] = {data[0].fval, data[1].fval, data[2].fval};
-        return degsval;
+        static float degsval[3] = {5, 5, 5};
+        return (degsval);
     }
 
     delay(3000);

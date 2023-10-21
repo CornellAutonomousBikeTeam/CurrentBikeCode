@@ -1,5 +1,5 @@
 #include "IMU_Header.h"
-#include "IMU_Class.cpp"
+
 void setup() {
   IMU imuInstance;
   imuInstance.IMUClasssetup();
