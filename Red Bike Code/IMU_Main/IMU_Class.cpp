@@ -72,8 +72,8 @@ float * IMU::IMUClassloop() {
         data[2].fval *= delta;
         currentMillis = micros();
 
-        static float degsval[3] = {5, 5, 5};
-        return (degsval);
+        static float degsval[3] = {data[0].fval, data[1].fval, data[2].fval};
+        return degsval;
     }
 
     delay(3000);
