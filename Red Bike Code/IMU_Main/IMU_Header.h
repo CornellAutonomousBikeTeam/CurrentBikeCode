@@ -2,7 +2,7 @@
 #define IMU_H
 
 #include <SPI.h>
-#include <Arduino.h>#include <Arduino.h>
+#include <Arduino.h>
 
 class IMU
 {
