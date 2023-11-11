@@ -2,7 +2,7 @@
 #define IMU_H
 
 #include <SPI.h>
-#include <Arduino.h>
+#include <Arduino.h>#include <Arduino.h>
 
 class IMU
 {
@@ -19,7 +19,8 @@ public:
     const int instruction_number;
     unsigned long startMillis;
     unsigned long currentMillis;
-    union u_types {
+    union u_types
+    {
         byte b[4];
         float fval;
     } data[3];
@@ -30,7 +31,7 @@ public:
     byte transferByte(byte byteToWrite);
     void endianSwap(byte temp[4]);
     byte readData(byte instruction);
-    float* IMUClassloop();
+    float *IMUClassloop();
 };
 
 #endif // IMU_H

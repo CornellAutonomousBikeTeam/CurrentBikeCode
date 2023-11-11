@@ -2,13 +2,16 @@
 
 IMU imuInstance;
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
-  while(!Serial);
+  while (!Serial)
+    ;
   imuInstance.IMUClasssetup();
 }
 
-void loop() {
+void loop()
+{
   Serial.println("hello");
   float* result = imuInstance.IMUClassloop();
   //this is shooting error "request" for member 'data' in 'result', which is of non-class type "float"
