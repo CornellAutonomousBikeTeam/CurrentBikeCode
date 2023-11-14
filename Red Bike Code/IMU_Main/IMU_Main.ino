@@ -1,26 +1,19 @@
 #include "IMU_Header.h"
 
-
-
 void setup()
 {
   IMU imuInstance;
   Serial.begin(9600);
   while (!Serial)
     ;
-  imuInstance.IMUClasssetup();
+  imuInstance.IMUClasssetup(); // Setting up the IMUInstance
 }
 
-void loop()
+void loop() // Constantly prints out the change in values of each axis.
 {
   IMU imuInstance;
-  //Serial.println("hello");
-  float* result = imuInstance.IMUClassloop();
-  Serial.println(imuInstance.data[0].fval); 
-  Serial.println(imuInstance.data[1].fval);
-  Serial.println(imuInstance.data[2].fval);
-  //Serial.println(result[0]);
-  //Serial.println(result[1]);
-  //Serial.println(result[2]);
-  Serial.println("after result");
+  float *result = imuInstance.IMUClassloop();
+  Serial.println(imuInstance.data[0].fval); // Yanjun & Alex: this is our current implementation to print out the
+  Serial.println(imuInstance.data[1].fval); // values from the IMU. It is not ideal since we are directly accessing the internal variables
+  Serial.println(imuInstance.data[2].fval); // of the imuInstance, but it is the only way that we can get it working for now.
 }

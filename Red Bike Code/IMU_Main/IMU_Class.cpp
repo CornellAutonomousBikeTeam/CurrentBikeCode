@@ -41,19 +41,19 @@ void IMU::endianSwap(byte temp[4])
 byte IMU::readData(byte instruction)
 {
     byte result = transferByte(0x01);
-    //Serial.print("Cleared internal buffer. Result: "), Serial.println(result);
+    // Serial.print("Cleared internal buffer. Result: "), Serial.println(result);
 
     // Send start of packet:
     result = transferByte(0xF6);
-    //Serial.print("Send start of packet. Result: "), Serial.println(result);
+    // Serial.print("Send start of packet. Result: "), Serial.println(result);
 
     // Send command (tared euler angles)
     result = transferByte(0x07);
-    //Serial.print("Send commmand 0x01. Result: "), Serial.println(result); // what this line does
+    // Serial.print("Send commmand 0x01. Result: "), Serial.println(result); // what this line does
 
     // Get status of device:
     result = transferByte(0xFF);
-    //Serial.print("Status of device. Result: "), Serial.println(result);
+    // Serial.print("Status of device. Result: "), Serial.println(result);
 }
 
 float *IMU::IMUClassloop()
@@ -65,7 +65,7 @@ float *IMU::IMUClassloop()
     {
         delay(1);
         result_loop = transferByte(0xFF);
-        //Serial.println(result_loop);
+        // Serial.println(result_loop);
     }
 
     for (int i = 0; i < (flinst[instruction_number]); i++)
@@ -95,7 +95,11 @@ float *IMU::IMUClassloop()
         Serial.println(data[2].fval);
         currentMillis = micros();
 
+        // Yanjun: We are running into code limitations as we are trying to keep
+        // this variable static but also access it outside.
+        // Having problems keeping it updating so using Jank solution for now
         static float degsval[3] = {data[0].fval, data[1].fval, data[2].fval};
+
         return degsval;
     }
     delay(3000);
