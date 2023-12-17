@@ -16,9 +16,10 @@ void loop()
     //ControlEquation.instance;
     control_eq.phi_dot = 0.5;
     //rollangleoffset
-    control_eq.rollAngleOffset = 
+    control_eq.rollAngleOffset = .3;
     //steerangleoffset
-    float result = rollAngleAcceleration(a, b, c);
+    control_eq.steerAngleOffset = .7;
+    float result = rollAngleAcceleration(control_eq.phi_dot, control_eq.rollAngleOffset, control_eq.steerAngleOffset);
     Serial.println(result);
 
     delay(500); 
