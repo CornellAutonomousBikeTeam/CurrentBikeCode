@@ -7,14 +7,12 @@ TurboPWM pwm;
 
 void setup() {
   pwm.setClockDivider(1, false);
-  pwm.timer(0, 1, 1000, true);
-  pwm.enable(0, true);
+  pwm.timer(1, 1, 1000, true);
 }
 
 void loop() {
-  pwm.analogWrite(5, HIGH);
-  delay(1000);
-  pwm.analogWrite(5, LOW);
-  delay(1000);
+  pwm.analogWrite(4, random(500, 1000));
+  delay(25);
+  pwm.analogWrite(7, random(300, 1000));
+  delay(25);
 }
-

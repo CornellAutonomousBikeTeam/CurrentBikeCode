@@ -1,17 +1,3 @@
-#define Center_Point 1500
-//1/27/2024
-unsigned int ReqSpeed = 710;
-
-
-#include <SAMD21turboPWM.h>
-
-
-
-#define REARPWM       3
-
-//creates pwm instance
-TurboPWM pwm; //what TurboPWM is
-
 #define A 0
 #define B 1
 #define mkpin(port, pin) ((port<<5) + pin)
@@ -50,33 +36,57 @@ TurboPWM pwm; //what TurboPWM is
 #define OutClr(pin) (PORT_IOBUS->Group[pin>>5].OUTCLR.reg = 1<<(pin & 0x1f))  // Make low
 #define OutTgl(pin) (PORT_IOBUS->Group[pin>>5].OUTTGL.reg = 1<<(pin & 0x1f))  // toggle value
 
-#define Output(pin)  (PORT_IOBUS->Group[pin>>5].DIRSET.reg = 1<<(pin & 0x1f))  // Make output
-#define Input(pin) (PORT_IOBUS->Group[pin>>5].DIRCLR.reg = 1<<(pin & 0x1f))  // Make input
-// #define DIRTgl(pin) (PORT_IOBUS->Group[pin>>5].DIRTGL.reg = 1<<(pin & 0x1f))  // toggle in/out
+#define Input(pin)  (PORT_IOBUS->Group[pin>>5].DIRSET.reg = 1<<(pin & 0x1f))  // Make input
+#define Output(pin) (PORT_IOBUS->Group[pin>>5].DIRCLR.reg = 1<<(pin & 0x1f))  // Make output
 
 #define Read(pin)  ((PORT_IOBUS->Group[pin>>5].IN.reg) >> (pin & 0x1f) & 1)   // Read pin
 
 
-//uint8_t channel = 0;
-
-void setup()
-{
+void setup() {
   Serial.begin(1000000);
-  Output(D5);
-  //assigns PWM frequency of 1.0 KHz and a duty cycle of 0% 
-  pwm.setClockDivider(1, true); //check how much the clock divison is
-  pwm.timer(1, 1, 100, true); // Timer 1, no prescaler, true is single slope (double check), 100 - threshold?
+  Output(D0);
 }
 
-void loop()
-{
-  int shifted = ReqSpeed - Center_Point; //double check what units of reqspeed and center_pointer
-  if(shifted<0){
-    shifted = 0-shifted;
-    OutSet(D5); //reason for setting D5 high and low?
-  }else{
-    OutClr(D5);
-  }
-  pwm.analogWrite(REARPWM, shifted); //write pwm on pin 3
+void loop() {
+  unsigned long start;
+  unsigned long end;
+  Serial.println("\n");
+  int test = 0;
 
+  Serial.print("v1: ");
+  start = micros();
+  for (unsigned int i = 0; i < 1000000; ++i){
+    OutTgl(D0);
+    // test += i;
+    // test += Read(D0);
+    // v1 test code
+  }
+  end = micros();
+  float t1 = (end - start)/1000000.;
+  Serial.print (t1);
+
+  Serial.print(", test: ");
+  Serial.print(test);
+
+  Serial.print(", v2: ");
+  start = micros();
+  for (unsigned int i = 0; i < 1000000; ++i){
+    OutTgl(D0);
+    OutTgl(D0);
+    OutTgl(D0);
+    // test += Read(D0);
+    // test += Read(D0);
+    // test += Read(D0);
+    // test += i;
+    // v2 test code
+  }
+  end = micros();
+  float t2 = (end - start)/1000000.;
+  Serial.print (t2);
+  
+  Serial.print(", test: ");
+  Serial.print(test);
+
+  Serial.print(", diff: ");
+  Serial.print(t2 - t1);
 }
