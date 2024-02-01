@@ -4,11 +4,11 @@
     float rollAngleOffset; 
     float steerAngleOffset;*/  
 
-ControlEquation:ControlEquation(float phi_dot, float rollAngleOffset, float steerAngleOffset){
+ControlEquation::ControlEquation(float phi_dot, float rollAngleOffset, float steerAngleOffset){
 
 }
 
-
+//Have to fix syntax issues for method definition such that ControlEquation::multiply_fixed
 public float multiply_fixed(float a, float b){
     return (a*b);
 }
