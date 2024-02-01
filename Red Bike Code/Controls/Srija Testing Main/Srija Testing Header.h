@@ -35,5 +35,5 @@ class ControlEquation
         float yawAngleVelocity(float velocity, float steerAngle, float rollAngle);
         float velocityDeriv();
         float rollAngleAcceleration(float rollAngle, float steerAngle, float velocity);
-}
+};
 #endif //ControlEquation_H
