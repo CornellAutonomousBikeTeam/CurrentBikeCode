@@ -10,9 +10,9 @@ class ControlEquation
         const float bikeHeight = 0.01; // wheelbase height 
         const float bikeLength = 0.02; // wheelbase length 
         const float b = 0.03; // distance between the center of mass and the rear axle
-        const float k1; // gain from roll angle 
-        const float k2; // gain from roll angular velocity 
-        const float k3; // gain from steering angle 
+        const float k1 = 0.01; // gain from roll angle 
+        const float k2 = 0.01; // gain from roll angular velocity 
+        const float k3 = 0.01; // gain from steering angle 
         
     public:
         float fixgravity;
@@ -20,7 +20,7 @@ class ControlEquation
         float fixbikeLength;
         float fixb;
         float fixbikeHL;
-        float phi_dot;
+        float phiDot;
         float rollAngleOffset;
         float steerAngleOffset;
 
