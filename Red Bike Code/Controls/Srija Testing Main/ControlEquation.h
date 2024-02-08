@@ -7,22 +7,22 @@ class ControlEquation
 {
     private:
         const float gravity = 9.8;  // gravitational constant
-        const float bikeHeight = 0.01; // wheelbase height 
-        const float bikeLength = 0.02; // wheelbase length 
-        const float b = 0.03; // distance between the center of mass and the rear axle
-        const float k1 = 0.01; // gain from roll angle 
-        const float k2 = 0.01; // gain from roll angular velocity 
-        const float k3 = 0.01; // gain from steering angle 
+        const float bikeHeight = 1; // wheelbase height 
+        const float bikeLength = 1; // wheelbase length 
+        const float b = 1; // distance between the center of mass and the rear axle
+        const float k1 = 1; // gain from roll angle 
+        const float k2 = 1; // gain from roll angular velocity 
+        const float k3 = 1; // gain from steering angle 
         
     public:
-        float fixgravity;
-        float fixbikeHeight;
-        float fixbikeLength;
-        float fixb;
-        float fixbikeHL;
-        float phiDot;
-        float rollAngleOffset;
-        float steerAngleOffset;
+        float fixgravity = 1;
+        float fixbikeHeight = 1;
+        float fixbikeLength = 1;
+        float fixb = 1;
+        float fixbikeHL = 1;
+        float phiDot = 1;
+        float rollAngleOffset = 1;
+        float steerAngleOffset = 1;
 
         // Public Methods
         ControlEquation(float phi_dot, float rollAngleOffset, float steerAngleOffset);

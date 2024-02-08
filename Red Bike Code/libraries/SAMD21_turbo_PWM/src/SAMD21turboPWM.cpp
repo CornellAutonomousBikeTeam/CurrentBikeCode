@@ -1,5 +1,8 @@
 #include "SAMD21turboPWM.h"
 
+/*GCLK: Generic Clock Controller Peripheral. Can be used as a switch board f sorts that allows you to 
+connect clock sources to various peripherals. */
+
 void TurboPWM::setClockDivider(unsigned int GCLKDiv, bool turbo) {
   // Configure input clock
   if (turbo) {
