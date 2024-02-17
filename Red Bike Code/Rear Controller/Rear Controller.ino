@@ -67,8 +67,6 @@ void setup()
   //digitalWrite(D5,HIGH);
   //assigns PWM frequency of 1.0 KHz and a duty cycle of 0% 
 
-
-  
   pinMode(6, OUTPUT);
   pinMode(4, OUTPUT);
   pwm.setClockDivider(1, false); //check how much the clock divison is
