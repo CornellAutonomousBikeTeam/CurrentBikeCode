@@ -1,4 +1,4 @@
-#define Center_Point         1500
+#define Center_Point 500
 
 unsigned int ReqSpeed = 710;
 
@@ -7,7 +7,7 @@ unsigned int ReqSpeed = 710;
 
 
 
-#define REARPWM       3
+#define REARPWM       A3
 
 //creates pwm instance
 TurboPWM pwm; //what TurboPWM is
@@ -61,22 +61,30 @@ TurboPWM pwm; //what TurboPWM is
 
 void setup()
 {
-  Serial.begin(1000000);
-  Output(D5);
+  //Serial.begin(9600);
+
+  
+  //digitalWrite(D5,HIGH);
   //assigns PWM frequency of 1.0 KHz and a duty cycle of 0% 
+
+  pinMode(6, OUTPUT);
+  pinMode(4, OUTPUT);
   pwm.setClockDivider(1, false); //check how much the clock divison is
-  pwm.timer(1, 1, 100, true); // Timer 1, no prescaler, true is single slope (double check), 100 - threshold?
+  pwm.timer(0, 1, 100, true); // Timer 1, no prescaler, true is single slope (double check), 100 - threshold?
 }
 
 void loop()
 {
+  
   int shifted = ReqSpeed - Center_Point; //double check what units of reqspeed and center_pointer
+  Serial.println(shifted);
   if(shifted<0){
     shifted = 0-shifted;
-    OutSet(D5); //reason for setting D5 high and low?
+    digitalWrite(4,HIGH);
   }else{
-    OutClr(D5);
+    digitalWrite(4,LOW);
   }
-  pwm.analogWrite(REARPWM, shifted); //write pwm on pin 3
-
+  pwm.analogWrite(6, shifted);
+  
+  delay(100);
 }
