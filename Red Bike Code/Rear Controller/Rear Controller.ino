@@ -1,4 +1,4 @@
-#define Center_Point 500
+#define Center_Point 1500
 
 unsigned int ReqSpeed = 710;
 
