@@ -64,7 +64,7 @@ void setup()
   Serial.begin(1000000);
   Output(D5);
   //assigns PWM frequency of 1.0 KHz and a duty cycle of 0% 
-  pwm.setClockDivider(1, true); //check how much the clock divison is
+  pwm.setClockDivider(1, false); //check how much the clock divison is
   pwm.timer(1, 1, 100, true); // Timer 1, no prescaler, true is single slope (double check), 100 - threshold?
 }
 
