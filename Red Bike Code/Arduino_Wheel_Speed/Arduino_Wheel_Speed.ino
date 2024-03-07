@@ -16,7 +16,7 @@ inline void reset1(unsigned long *timerstart)
 }
 
 inline void read1(unsigned long *timerstart)
-{
+{}
 
 
 // reset1 uses the encoder so it resets the timer when an active high is detected
