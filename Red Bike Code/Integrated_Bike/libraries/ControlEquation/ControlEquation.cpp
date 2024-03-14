@@ -1,8 +1,8 @@
 #include "ControlEquation.h"
 #include <math.h>.
-    float phi_dot;
-    float rollAngleOffset; 
-    float steerAngleOffset; 
+float phi_dot;
+float rollAngleOffset; 
+float steerAngleOffset; 
 
 ControlEquation::ControlEquation(float phi_dot, float rollAngleOffset, float steerAngleOffset){
   phi_dot = phi_dot;
@@ -10,6 +10,14 @@ ControlEquation::ControlEquation(float phi_dot, float rollAngleOffset, float ste
   steerAngleOffset = steerAngleOffset;
 
 }
+
+ControlEquation::ControlEquation(){
+  phi_dot = 0;
+  rollAngleOffset = 0;
+  steerAngleOffset = 0;
+
+}
+
 
 //Have to fix syntax issues for method definition such that ControlEquation::multiply_fixed
 float ControlEquation::multiply_fixed(float a, float b){
