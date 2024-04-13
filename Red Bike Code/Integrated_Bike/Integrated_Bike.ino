@@ -10,22 +10,29 @@ volatile float motionEq;
 IMU imu;
 ControlEquation sc;
 
+SemaphoreHandle_t xSemaphore = NULL;
+
 void IMU_Thread( void *pvParameters ) 
 {
-  
   Serial.println("IMU Thread: Started"); 
-
-  while(1)
-  {
+  while(1){
+    
+    if (xSemaphore == NULL){
+      xSemaphore = xSemaphoreCreateMutex();
+    }
     float* temp = imu.IMUClassloop();
-
     for (int i = 0; i < 3; i++) {
         roll_yaw_pitch[i] = temp[i]; // Copy each element.
     }
+    xSemaphoreGive(xSemaphore);
+    Serial.println("Semaphore Given!");
+    vTaskDelay(100);
   }
+  
   
   // delete ourselves.
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
+  
   Serial.println("IMU Thread: Deleting");
   vTaskDelete( NULL );
 }
@@ -34,12 +41,15 @@ void Stability_Thread( void *pvParameters )
 {
   
   Serial.println("Stability: Started");
-
-  while(1)
-  {
-    motionEq = sc.rollAngleAcceleration(roll_yaw_pitch[0], 0, velocity);
+  while(1){
+      if(xSemaphoreTake(xSemaphore, 10) == true){
+        Serial.println("Semaphore Taken!");
+        motionEq = sc.rollAngleAcceleration(roll_yaw_pitch[0], 0, velocity);
+      }
+      else{
+        vTaskDelay(100);
+      }
   }
-  
   // delete ourselves.
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
   Serial.println("Stability Thread: Deleting");
@@ -50,10 +60,13 @@ void Wheel_Speed_Thread( void *pvParameters )
 {
   
   Serial.println("Wheel Speed Thread: Started");
-
-  while(1)
-  {
-    velocity = 1; //unsure how to do this since I have to decide between arduino wheel speed / wheel speed module
+  while(1){
+    if(xSemaphoreTake(xSemaphore, 10) == true){
+      velocity = 1; //unsure how to do this since I have to decide between arduino wheel speed / wheel speed module
+    }
+    else{
+        vTaskDelay(100);
+    }
   }
   
   // delete ourselves.
@@ -78,13 +91,13 @@ void setup()
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL ); //Task Handle
 
-    xTaskCreate(
+    /*xTaskCreate(
     Wheel_Speed_Thread
     ,  "Wheel Speed" 
     ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL //Parameters for the task
     ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL ); //Task Handle
+    ,  NULL ); //Task Handle*/
 
       xTaskCreate(
     Stability_Thread
