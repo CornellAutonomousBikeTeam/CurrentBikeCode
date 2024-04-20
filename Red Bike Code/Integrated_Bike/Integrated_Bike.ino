@@ -3,29 +3,30 @@
 #include "IMU_Header.h"
 #include "SPI.h" 
 #include "ControlEquation.h"
+#define SERIAL          SerialUSB
 
 volatile float velocity;
 volatile float roll_yaw_pitch[3]; 
 volatile float motionEq;
-IMU imu;
-ControlEquation sc;
+//IMU imu;
+//ControlEquation sc;
 
-SemaphoreHandle_t xSemaphore = NULL;
+SemaphoreHandle_t threadSemaphore = NULL;
 
 void IMU_Thread( void *pvParameters ) 
 {
-  Serial.println("IMU Thread: Started"); 
+  SERIAL.println("IMU Thread: Started"); 
   while(1){
     
-    if (xSemaphore == NULL){
-      xSemaphore = xSemaphoreCreateMutex();
+    if (threadSemaphore == NULL){
+      threadSemaphore = xSemaphoreCreateCounting(1,0);
     }
-    float* temp = imu.IMUClassloop();
-    for (int i = 0; i < 3; i++) {
-        roll_yaw_pitch[i] = temp[i]; // Copy each element.
-    }
-    xSemaphoreGive(xSemaphore);
-    Serial.println("Semaphore Given!");
+    //float* temp = imu.IMUClassloop();
+    //for (int i = 0; i < 3; i++) {
+    //    roll_yaw_pitch[i] = temp[i]; // Copy each element.
+    //}
+    xSemaphoreGive(threadSemaphore);
+    SERIAL.println("Semaphore Given!");
     vTaskDelay(100);
   }
   
@@ -33,53 +34,61 @@ void IMU_Thread( void *pvParameters )
   // delete ourselves.
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
   
-  Serial.println("IMU Thread: Deleting");
+  SERIAL.println("IMU Thread: Deleting");
   vTaskDelete( NULL );
 }
 
 void Stability_Thread( void *pvParameters ) 
 {
   
-  Serial.println("Stability: Started");
+  SERIAL.println("Stability: Started");
   while(1){
-      if(xSemaphoreTake(xSemaphore, 10) == true){
-        Serial.println("Semaphore Taken!");
-        motionEq = sc.rollAngleAcceleration(roll_yaw_pitch[0], 0, velocity);
+      if(xSemaphoreTake(threadSemaphore, 1000) == true){
+        SERIAL.println("Semaphore Taken!");
+       // motionEq = sc.rollAngleAcceleration(roll_yaw_pitch[0], 0, velocity);
       }
       else{
-        vTaskDelay(100);
+        SERIAL.println("Semaphore NOT Taken!");
+        delay(100);
+        vTaskDelay(1000);
       }
   }
   // delete ourselves.
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
-  Serial.println("Stability Thread: Deleting");
+  SERIAL.println("Stability Thread: Deleting");
   vTaskDelete( NULL );
 }
 
 void Wheel_Speed_Thread( void *pvParameters ) 
 {
   
-  Serial.println("Wheel Speed Thread: Started");
+  SERIAL.println("Wheel Speed Thread: Started");
   while(1){
-    if(xSemaphoreTake(xSemaphore, 10) == true){
+    if(xSemaphoreTake(threadSemaphore, 1000) == true){
       velocity = 1; //unsure how to do this since I have to decide between arduino wheel speed / wheel speed module
+      SERIAL.println("Semaphore Taken!");
     }
     else{
-        vTaskDelay(100);
+      SERIAL.println("Semaphore NOT Taken!");
+      delay(100);
+      vTaskDelay(1000);
     }
   }
   
   // delete ourselves.
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
-  Serial.println("Wheel Speed Thread: Deleting");
+  SERIAL.println("Wheel Speed Thread: Deleting");
   vTaskDelete( NULL );
 }
 
 
 void setup()
 {
-  IMU imu;
-  imu.IMUClasssetup();
+  Serial.begin(9600);
+  while(!Serial);
+  
+  /*IMU imu;
+  imu.IMUClasssetup();*/
 
 
   xTaskCreate(
@@ -91,23 +100,27 @@ void setup()
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL ); //Task Handle
 
-    /*xTaskCreate(
+    xTaskCreate(
     Wheel_Speed_Thread
     ,  "Wheel Speed" 
     ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL //Parameters for the task
-    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL ); //Task Handle*/
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL ); //Task Handle
 
       xTaskCreate(
     Stability_Thread
     ,  "Stability Calc" 
     ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL //Parameters for the task
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL ); //Task Handle
+
+    vTaskStartScheduler();
 }
+
 
 void loop() // Constantly prints out the change in values of each axis.
 {
+ //Serial.println("finish");
 }
