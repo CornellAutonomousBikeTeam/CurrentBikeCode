@@ -8,25 +8,26 @@
 volatile float velocity;
 volatile float roll_yaw_pitch[3]; 
 volatile float motionEq;
-//IMU imu;
-//ControlEquation sc;
+IMU imu;
+ControlEquation sc;
 
-SemaphoreHandle_t threadSemaphore = NULL;
+SemaphoreHandle_t imuSemaphore = NULL;
+SemaphoreHandle_t wheelSpeedSemaphore = NULL;
 
 void IMU_Thread( void *pvParameters ) 
 {
   SERIAL.println("IMU Thread: Started"); 
   while(1){
     
-    if (threadSemaphore == NULL){
-      threadSemaphore = xSemaphoreCreateCounting(1,0);
+    if (imuSemaphore == NULL){
+      imuSemaphore = xSemaphoreCreateCounting(1,0);
     }
-    //float* temp = imu.IMUClassloop();
-    //for (int i = 0; i < 3; i++) {
-    //    roll_yaw_pitch[i] = temp[i]; // Copy each element.
-    //}
-    xSemaphoreGive(threadSemaphore);
-    SERIAL.println("Semaphore Given!");
+    float* temp = imu.IMUClassloop();
+    for (int i = 0; i < 3; i++) {
+        roll_yaw_pitch[i] = temp[i]; // Copy each element.
+    }
+    xSemaphoreGive(imuSemaphore);
+    SERIAL.println("IMU Semaphore Given!");
     vTaskDelay(100);
   }
   
@@ -43,12 +44,12 @@ void Stability_Thread( void *pvParameters )
   
   SERIAL.println("Stability: Started");
   while(1){
-      if(xSemaphoreTake(threadSemaphore, 1000) == true){
-        SERIAL.println("Semaphore Taken!");
-       // motionEq = sc.rollAngleAcceleration(roll_yaw_pitch[0], 0, velocity);
+      if(xSemaphoreTake(imuSemaphore, 1000) == true || xSemaphoreTake(wheelSpeedSemaphore, 1000) == true){
+        SERIAL.println("Semaphores Taken by Stability!");
+        motionEq = sc.rollAngleAcceleration(roll_yaw_pitch[0], 0, velocity);
       }
       else{
-        SERIAL.println("Semaphore NOT Taken!");
+        SERIAL.println("Semaphores NOT Taken by Stability!");
         delay(100);
         vTaskDelay(1000);
       }
@@ -64,15 +65,14 @@ void Wheel_Speed_Thread( void *pvParameters )
   
   SERIAL.println("Wheel Speed Thread: Started");
   while(1){
-    if(xSemaphoreTake(threadSemaphore, 1000) == true){
-      velocity = 1; //unsure how to do this since I have to decide between arduino wheel speed / wheel speed module
-      SERIAL.println("Semaphore Taken!");
+    
+    if (wheelSpeedSemaphore == NULL){
+      wheelSpeedSemaphore = xSemaphoreCreateCounting(1,0);
     }
-    else{
-      SERIAL.println("Semaphore NOT Taken!");
-      delay(100);
-      vTaskDelay(1000);
-    }
+    velocity = 1;
+    xSemaphoreGive(wheelSpeedSemaphore);
+    SERIAL.println("Wheel Speed Semaphore Given!");
+    vTaskDelay(100);
   }
   
   // delete ourselves.
@@ -87,8 +87,8 @@ void setup()
   Serial.begin(9600);
   while(!Serial);
   
-  /*IMU imu;
-  imu.IMUClasssetup();*/
+  IMU imu;
+  imu.IMUClasssetup();
 
 
   xTaskCreate(
@@ -105,7 +105,7 @@ void setup()
     ,  "Wheel Speed" 
     ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL //Parameters for the task
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL ); //Task Handle
 
       xTaskCreate(
@@ -113,7 +113,7 @@ void setup()
     ,  "Stability Calc" 
     ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL //Parameters for the task
-    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL ); //Task Handle
 
     vTaskStartScheduler();
