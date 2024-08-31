@@ -26,6 +26,7 @@ class ControlEquation
 
         // Public Methods
         ControlEquation(float phi_dot, float rollAngleOffset, float steerAngleOffset);
+        ControlEquation();
         float multiply_fixed(float a, float b);
         float divide_fixed(float a, float b);
         float controlVariableCalculation(float rollAngle, float rollAngleOffset, float steeringAngle, float steeringAngleOffset);
