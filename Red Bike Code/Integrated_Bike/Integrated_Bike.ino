@@ -3,6 +3,7 @@
 #include "IMU_Header.h"
 #include "SPI.h" 
 #include "ControlEquation.h"
+#include "Wheel_Speed_Header.h"
 #define SERIAL          SerialUSB
 
 volatile float velocity;
@@ -10,6 +11,7 @@ volatile float roll_yaw_pitch[3];
 volatile float motionEq;
 IMU imu;
 ControlEquation sc;
+Wheel_Speed_Module w;
 
 SemaphoreHandle_t imuSemaphore = NULL;
 SemaphoreHandle_t wheelSpeedSemaphore = NULL;
@@ -69,7 +71,7 @@ void Wheel_Speed_Thread( void *pvParameters )
     if (wheelSpeedSemaphore == NULL){
       wheelSpeedSemaphore = xSemaphoreCreateCounting(1,0);
     }
-    velocity = 1;
+    velocity = w.getRearWheelSpeed;
     xSemaphoreGive(wheelSpeedSemaphore);
     SERIAL.println("Wheel Speed Semaphore Given!");
     vTaskDelay(100);
