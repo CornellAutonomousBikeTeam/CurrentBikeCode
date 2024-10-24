@@ -4,6 +4,7 @@
 #include "SPI.h" 
 #include "ControlEquation.h"
 #include "Wheel_Speed_Header.h"
+#include "TinyGPS++.h"
 #define SERIAL          SerialUSB
 
 volatile float velocity;
@@ -12,6 +13,7 @@ volatile float motionEq;
 IMU imu;
 ControlEquation sc;
 Wheel_Speed_Module w;
+TinyGPSPlus gps;
 
 SemaphoreHandle_t imuSemaphore = NULL;
 SemaphoreHandle_t wheelSpeedSemaphore = NULL;
@@ -53,12 +55,47 @@ void Stability_Thread( void *pvParameters )
       else{
         SERIAL.println("Semaphores NOT Taken by Stability!");
         delay(100);
-        vTaskDelay(1000);
       }
+      vTaskDelay(1000);
   }
   // delete ourselves.
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
   SERIAL.println("Stability Thread: Deleting");
+  vTaskDelete( NULL );
+}
+
+void GPS_Thread( void *pvParameters ) 
+{
+  
+  SERIAL.println("GPS: Started");
+  while(1){
+      if(xSemaphoreTake(imuSemaphore, 1000) == true || xSemaphoreTake(wheelSpeedSemaphore, 1000) == true){
+        SERIAL.println("Semaphores Taken by GPS!");
+        
+        while (Serial3.available() > 0) {
+          gps.encode(Serial3.read());
+        }
+
+        // Output GPS data
+        SERIAL.print("Latitude                      "); SERIAL.println(gps.location.lat(), 6);
+        SERIAL.print("Longitude                     "); SERIAL.println(gps.location.lng(), 6);
+        SERIAL.print("Hours                         "); SERIAL.println(gps.time.hour()); // Hour (0-23)
+        SERIAL.print("Minutes                       "); SERIAL.println(gps.time.minute()); // Minute (0-59)
+        SERIAL.print("Seconds                       "); SERIAL.println(gps.time.second()); // Second (0-59)
+        SERIAL.print("Centiseconds                  "); SERIAL.println(gps.time.centisecond()); // 100ths of a second (0-99)
+        SERIAL.print("Date                          "); SERIAL.println(gps.date.value()); // Raw date in DDMMYY format
+        SERIAL.print("Number of Satellites in use   "); SERIAL.println(gps.satellites.value()); // Number of satellites in use
+        SERIAL.print("Course in degrees             "); SERIAL.println(gps.course.deg());
+    }
+    else{
+      SERIAL.println("Semaphores NOT Taken by GPS!");
+      delay(100);
+    }
+    vTaskDelay(1000);
+  }
+  // delete ourselves.
+  // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
+  SERIAL.println("GPS Thread: Deleting");
   vTaskDelete( NULL );
 }
 
@@ -105,6 +142,14 @@ void setup()
     xTaskCreate(
     Wheel_Speed_Thread
     ,  "Wheel Speed" 
+    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL //Parameters for the task
+    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL ); //Task Handle
+
+    xTaskCreate(
+    GPS_Thread
+    ,  "GPS" 
     ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL //Parameters for the task
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
